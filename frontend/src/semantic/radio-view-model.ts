@@ -1255,6 +1255,9 @@ export interface ReceiverIndicatorViewModel {
   notchMode: ReceiverIndicatorField<'off' | 'auto' | 'manual'>;
   attenuator: ReceiverIndicatorField<number>;
   preamp: ReceiverIndicatorField<number>;
+  /** `Capabilities.preLabels` verbatim, keyed by `String(level)`; absent when
+   *  the profile declares none. */
+  preampLabels?: Readonly<Record<string, string>>;
   rfGain: DisplayObservedField<number>;
   digiSel: ReceiverIndicatorField<boolean>;
   ipPlus: ReceiverIndicatorField<boolean>;
@@ -1807,7 +1810,7 @@ function validateReceiverIndicator(value: unknown, path: string): ReceiverIndica
   exactKeys(v, [
     'receiver', 'availability', 'rfState', 'sMeter', 'bandwidthHz',
     'bandwidthMaxHz', 'agcMode',
-    'nbActive', 'nrActive', 'notchMode', 'attenuator', 'preamp', 'rfGain',
+    'nbActive', 'nrActive', 'notchMode', 'attenuator', 'preamp', 'preampLabels', 'rfGain',
     'digiSel', 'ipPlus',
   ], path);
   const receiver = oneOf(v.receiver, RECEIVER_IDS, `${path}.receiver`);
@@ -1833,6 +1836,9 @@ function validateReceiverIndicator(value: unknown, path: string): ReceiverIndica
     ),
     attenuator: validateTxAuxField(v.attenuator, `${path}.attenuator`, num),
     preamp: validateTxAuxField(v.preamp, `${path}.preamp`, num),
+    ...(v.preampLabels === undefined
+      ? {}
+      : { preampLabels: strRecord(v.preampLabels, `${path}.preampLabels`) }),
     rfGain: validateDisplayObservedField(v.rfGain, `${path}.rfGain`, num),
     digiSel: validateTxAuxField(v.digiSel, `${path}.digiSel`, bool),
     ipPlus: validateTxAuxField(v.ipPlus, `${path}.ipPlus`, bool),

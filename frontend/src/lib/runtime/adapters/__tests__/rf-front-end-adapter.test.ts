@@ -230,6 +230,14 @@ describe('preValues/attValues choice sets (MOR-1292)', () => {
     expect(view.rfFrontEnd!.preLabels).toEqual(preLabels);
   });
 
+  it('echoes the preamp labels on the receiver indicator, and omits an empty map', () => {
+    const preLabels = { '0': 'OFF', '1': 'INT', '2': 'EXT', '3': 'INT+EXT' };
+    const labelled = model(bareState(), caps({ capabilities: ['preamp', 'preamp_main'], preValues: [0, 1, 2, 3], preLabels }));
+    expect(labelled.receiverIndicators![0].preampLabels).toEqual(preLabels);
+    const bare = model(bareState(), caps({ capabilities: ['preamp', 'preamp_main'], preValues: [0, 1], preLabels: {} }));
+    expect(Object.keys(bare.receiverIndicators![0])).not.toContain('preampLabels');
+  });
+
   it('omits preLabels when caps declares none or an empty map', () => {
     for (const preLabels of [undefined, {}]) {
       const view = model(bareState(), caps({ capabilities: ['preamp'], preValues: [0, 1], preLabels }));

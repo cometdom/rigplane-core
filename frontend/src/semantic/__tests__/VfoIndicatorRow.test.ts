@@ -476,6 +476,26 @@ describe('RF gain display observation', () => {
     }
   });
 
+  describe('P.AMP shows the profile preamp label (IC-9700 internal/external)', () => {
+    const LABELS = { '0': 'OFF', '1': 'INT', '2': 'EXT', '3': 'INT+EXT' };
+    const preampNode = (overrides: Partial<ReceiverIndicatorViewModel>): HTMLElement => {
+      render({ indicator: indicator(overrides) });
+      return target.querySelector<HTMLElement>('[data-indicator-fact="preamp"]')!;
+    };
+
+    it('prints the label for the known level and reserves the widest label', () => {
+      const node = preampNode({ preamp: known(2), preampLabels: LABELS });
+      expect(node.textContent).toBe('P.AMP EXT');
+      expect(node.style.minInlineSize).toBe(`${'P.AMP INT+EXT'.length}ch`);
+    });
+
+    it('keeps the numeric level and the constant reservation without labels', () => {
+      const node = preampNode({ preamp: known(2) });
+      expect(node.textContent).toBe('P.AMP 2');
+      expect(node.style.minInlineSize).toBe(`${FACT_SLOT_RESERVATIONS.preamp}ch`);
+    });
+  });
+
   // MOR-2706: the BW fact's reservation derives from the mounted profile's
   // widest filter-width value (`bandwidthMaxHz`, a structural fact the
   // adapter emits from the capabilities — IC-7300 AM max_hz 10000, FTX-1

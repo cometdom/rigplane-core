@@ -1184,6 +1184,9 @@ function deriveReceiverIndicators(
       notchMode: txAuxField(hasNotch, notchOperational, notchMode),
       attenuator: strictField(attStructural, 'att', numOrUndef(rx?.att)),
       preamp: strictField(preampStructural, 'preamp', numOrUndef(rx?.preamp)),
+      ...(preampStructural && caps.preLabels && Object.keys(caps.preLabels).length > 0
+        ? { preampLabels: caps.preLabels }
+        : {}),
       rfGain: {
         ...strictField(hasRfGain, 'rfGain', numOrUndef(rx?.rfGain)),
         display: qualifyDisplayObservation({

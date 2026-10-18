@@ -31,7 +31,9 @@
   //   (IC-7610 0..45 dB); attValues do not reach this component.
   // - P.AMP: `P.AMP 3` — the largest preamp level across profiles
   //   (IC-9700 0..3, rigs/ic9700.toml [preamp]); preValues do not reach
-  //   this component.
+  //   this component. This constant is the FLOOR: a profile that declares
+  //   `[preamp] labels` widens the rendered slot to `P.AMP {widest label}`
+  //   (`preampReservationCh`).
   // - ANT: `ANT 2` — the largest antenna index across profiles
   //   (IC-7610 has two TX ports); the port count does not reach this
   //   component.
@@ -158,6 +160,13 @@
     return widest === undefined
       ? FACT_SLOT_RESERVATIONS.bandwidth
       : Math.max(FACT_SLOT_RESERVATIONS.bandwidth, `BW ${widest} Hz`.length);
+  });
+
+  /** The P.AMP slot reserves the widest profile label when the profile
+   *  declares labels (`preampLabels`), with the constant as the floor. */
+  let preampReservationCh = $derived.by(() => {
+    const labels = Object.values(indicator?.preampLabels ?? {});
+    return Math.max(FACT_SLOT_RESERVATIONS.preamp, ...labels.map((label) => `P.AMP ${label}`.length));
   });
 
   function sharedAggregate(
@@ -301,8 +310,8 @@
     {/if}
     {#if indicator.preamp.availability.structural}
       <span class="fact" data-indicator-fact="preamp" data-state={indicator.preamp.reading.status}
-        style:min-inline-size={`${FACT_SLOT_RESERVATIONS.preamp}ch`}
-        >P.AMP{readingText(indicator.preamp, (v) => ` ${String(v)}`)}</span
+        style:min-inline-size={`${preampReservationCh}ch`}
+        >P.AMP{readingText(indicator.preamp, (v) => ` ${indicator.preampLabels?.[String(v)] ?? String(v)}`)}</span
       >
     {/if}
     {#if indicator.ipPlus.availability.structural}
