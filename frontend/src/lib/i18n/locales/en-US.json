@@ -353,5 +353,11 @@
 
   "glossary.callsign": "callsign",
   "glossary.squelch": "squelch",
-  "glossary.bandPlan": "band plan"
+  "glossary.bandPlan": "band plan",
+  "core.settings.radioMenu.extPreamp144": "External P.AMP 144 MHz",
+  "core.settings.radioMenu.extPreamp430": "External P.AMP 430 MHz",
+  "core.settings.radioMenu.extPreamp1200": "External P.AMP 1200 MHz",
+  "core.settings.radioMenu.empty": "This radio exposes no menu settings here.",
+  "core.settings.radioMenu.loadError": "Could not read the radio menu settings.",
+  "core.settings.radioMenu.writeError": "The radio did not accept the change."
 }

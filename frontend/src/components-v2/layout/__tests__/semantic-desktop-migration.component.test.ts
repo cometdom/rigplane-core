@@ -1199,6 +1199,7 @@ describe("the SDR face's centre-top pair is zone-owned (MOR-2231, batch 4)", () 
     '.left-sidebar band',
     '.right-sidebar memory',
     '.settings-modal desktop-language',
+    '.settings-modal desktop-radio-menu',
     '.settings-modal desktop-vfo-ops',
     '.settings-modal desktop-workspace',
     'content-center spectrum-panel',
@@ -1815,7 +1816,7 @@ describe('the legacy-twin suppression channel (MOR-1364, S6-pre)', () => {
       .sort();
     expect(ids).toEqual([
       'band',
-      'desktop-language', 'desktop-vfo-ops', 'desktop-workspace',
+      'desktop-language', 'desktop-radio-menu', 'desktop-vfo-ops', 'desktop-workspace',
     ]);
   });
 
@@ -1845,6 +1846,8 @@ describe('the legacy-twin suppression channel (MOR-1364, S6-pre)', () => {
     'desktop-vfo-ops': 'S10 row 7 (split row) is already gated on `semanticDeck`; the section '
       + 'itself is PERMANENT because of the band tabs above (row 10).',
     'desktop-workspace': 'S10 row 9 — PERMANENT. Workspace preferences are not a radio fact.',
+    'desktop-radio-menu': 'Personal fork — persistent radio-menu toggles (IC-9700 External P.AMP '
+      + 'per band), read when the settings open. No semantic surface covers menu settings.',
     // Not in the inventory above under the default fixture, but reachable and
     // decided, so recorded here rather than discovered later:
     tx: 'R9 — the ONE key/unkey authority. It follows the semantic DECK via `hideTxPanel` '

@@ -352,5 +352,11 @@
 
   "glossary.callsign": "позывной",
   "glossary.squelch": "шумоподавитель",
-  "glossary.bandPlan": "план диапазона"
+  "glossary.bandPlan": "план диапазона",
+  "core.settings.radioMenu.extPreamp144": "Внешний предусилитель 144 МГц",
+  "core.settings.radioMenu.extPreamp430": "Внешний предусилитель 430 МГц",
+  "core.settings.radioMenu.extPreamp1200": "Внешний предусилитель 1200 МГц",
+  "core.settings.radioMenu.empty": "У этого трансивера нет пунктов меню, доступных здесь.",
+  "core.settings.radioMenu.loadError": "Не удалось прочитать настройки меню трансивера.",
+  "core.settings.radioMenu.writeError": "Трансивер не принял изменение."
 }

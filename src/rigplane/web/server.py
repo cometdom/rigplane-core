@@ -66,7 +66,7 @@ from ..core.command_dispatch import (
     command_descriptor,
     prepare_command_intent,
 )
-from ..core.exceptions import CommandError, CommandRejectedError
+from ..core.exceptions import CommandError, CommandRejectedError, RigplaneError
 from ..core.state_pipeline_contracts import (
     CommandIntent,
     CommandLifecycleEvent,
@@ -5490,6 +5490,71 @@ class WebServer:
                 "message": "Managed transmit authority unavailable",
             },
         )
+
+    async def _handle_http_menu_toggles(
+        self,
+        method: str,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """GET/PUT the radio's named menu toggles (``radio.menu_toggles()``)."""
+        radio = self._radio
+        names_of = getattr(radio, "menu_toggles", None)
+        if radio is None or not callable(names_of):
+            await self._send_json(
+                writer, 503, "Service Unavailable", {"error": "no_radio"}
+            )
+            return
+        names: tuple[str, ...] = names_of()
+
+        if method == "GET":
+            toggles: list[dict[str, object]] = []
+            for name in names:
+                try:
+                    value: bool | None = await radio.get_menu_toggle(name)
+                except (RigplaneError, TimeoutError, ConnectionError):
+                    value = None
+                toggles.append({"name": name, "on": value})
+            await self._send_json(writer, 200, "OK", {"toggles": toggles})
+            return
+
+        if self._config.read_only:
+            await self._send_json(writer, 403, "Forbidden", {"error": "read_only"})
+            return
+        payload = await self._read_json_object(writer, headers, reader)
+        if payload is None:
+            return
+        requested = payload.get("name")
+        on = payload.get("on")
+        if (
+            set(payload) != {"name", "on"}
+            or type(on) is not bool
+            or not isinstance(requested, str)
+            or requested not in names
+        ):
+            await self._send_json(
+                writer,
+                400,
+                "Bad Request",
+                {
+                    "error": "invalid_request",
+                    "message": "body must be {name, on} for a listed menu toggle",
+                },
+            )
+            return
+        try:
+            await radio.set_menu_toggle(requested, on)
+            current = await radio.get_menu_toggle(requested)
+        except (RigplaneError, TimeoutError, ConnectionError) as exc:
+            await self._send_json(
+                writer,
+                502,
+                "Bad Gateway",
+                {"error": "radio_error", "message": str(exc)},
+            )
+            return
+        await self._send_json(writer, 200, "OK", {"name": requested, "on": current})
 
     async def _handle_http_managed_tx(
         self,

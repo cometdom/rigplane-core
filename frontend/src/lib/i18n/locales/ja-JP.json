@@ -353,5 +353,11 @@
   "core.rxTx.blocked.rfStateUnknown": "無線機の RF 状態はまだ確認されていません",
   "core.spectrum.more": "その他",
   "core.spectrum.toggleOff": "切",
-  "core.spectrum.toggleOn": "入"
+  "core.spectrum.toggleOn": "入",
+  "core.settings.radioMenu.extPreamp144": "外部プリアンプ 144 MHz",
+  "core.settings.radioMenu.extPreamp430": "外部プリアンプ 430 MHz",
+  "core.settings.radioMenu.extPreamp1200": "外部プリアンプ 1200 MHz",
+  "core.settings.radioMenu.empty": "この無線機にはここで変更できるメニュー設定がありません。",
+  "core.settings.radioMenu.loadError": "無線機のメニュー設定を読み取れませんでした。",
+  "core.settings.radioMenu.writeError": "無線機が変更を受け付けませんでした。"
 }

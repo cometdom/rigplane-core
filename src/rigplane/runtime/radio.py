@@ -100,6 +100,7 @@ from rigplane.commands import (
     _level_bcd_decode,
     build_civ_frame,
     filter_index_to_hz,
+    parse_civ_frame,
     get_acc1_mod_level,
     get_af_mute,
     get_agc,
@@ -4975,6 +4976,59 @@ class CoreRadio(ScopeRuntimeMixin, AudioRuntimeMixin, DualRxRuntimeMixin):
         self._check_connected()
         civ = self._commands.set_dual_watch(on, to_addr=self._radio_addr)
         await self._send_civ_raw(civ, wait_response=False)
+
+    #: Persistent on/off radio-menu items a client may read and write by
+    #: name. A name is offered only when the profile declares both its
+    #: ``get_<name>`` and ``set_<name>`` commands; nothing outside this tuple
+    #: is reachable through ``get_menu_toggle``/``set_menu_toggle``.
+    MENU_TOGGLE_NAMES: tuple[str, ...] = (
+        "ext_preamp_144",
+        "ext_preamp_430",
+        "ext_preamp_1200",
+    )
+
+    def menu_toggles(self) -> tuple[str, ...]:
+        """The ``MENU_TOGGLE_NAMES`` this radio's profile declares."""
+        return tuple(
+            name
+            for name in self.MENU_TOGGLE_NAMES
+            if self._profile.supports_command(f"get_{name}")
+            and self._profile.supports_command(f"set_{name}")
+        )
+
+    def _menu_toggle_frame(self, name: str, direction: str, data: bytes) -> bytes:
+        if name not in self.menu_toggles():
+            raise ValueError(f"{name!r} is not a menu toggle of {self._profile.model}")
+        command_map = self._profile.command_map
+        assert command_map is not None
+        wire = command_map.get(f"{direction}_{name}")
+        return build_civ_frame(
+            self._radio_addr,
+            CONTROLLER_ADDR,
+            wire[0],
+            sub=wire[1],
+            data=bytes(wire[2:]) + data,
+        )
+
+    async def get_menu_toggle(self, name: str) -> bool:
+        """Read one ``menu_toggles()`` item (CI-V ``1A 05 <addr>``)."""
+        civ = self._menu_toggle_frame(name, "get", b"")
+        frame = parse_civ_frame(civ)
+        return await self._get_bool_value(
+            civ,
+            key=f"get_{name}",
+            command=frame.command,
+            sub=frame.sub or 0,
+            prefix=frame.data,
+        )
+
+    async def set_menu_toggle(self, name: str, enabled: bool) -> None:
+        """Write one ``menu_toggles()`` item and wait for the radio's ACK."""
+        self._check_connected()
+        civ = self._menu_toggle_frame(name, "set", b"\x01" if enabled else b"\x00")
+        resp = await self._send_civ_expect(civ, label=f"set_{name}")
+        if parse_ack_nak(resp) is not True:
+            raise CommandError(f"Radio rejected set_{name}({enabled})")
 
     async def get_quick_split(self) -> bool:
         """Read the persistent Quick Split menu toggle (CI-V 0x1A 0x05).

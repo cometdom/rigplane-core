@@ -986,6 +986,13 @@ set_quick_dual_watch = { absent = "IC-9700 CI-V Reference Guide (Icom, 2019) p.6
 # 2, so this profile's 0224 is now the only address any builder can send.
 get_dash_ratio = [0x1A, 0x05, 0x02, 0x24]  # source: IC-9700 CI-V Reference Guide p.9
 set_dash_ratio = [0x1A, 0x05, 0x02, 0x24]  # source: IC-9700 CI-V Reference Guide p.9
+# SET > Connectors > External P.AMP > 144M/430M/1200M, 00 = OFF, 01 = ON.
+get_ext_preamp_144 = [0x1A, 0x05, 0x00, 0x93]   # source: IC-9700 CI-V Reference Guide p.7
+set_ext_preamp_144 = [0x1A, 0x05, 0x00, 0x93]   # source: IC-9700 CI-V Reference Guide p.7
+get_ext_preamp_430 = [0x1A, 0x05, 0x00, 0x94]   # source: IC-9700 CI-V Reference Guide p.7
+set_ext_preamp_430 = [0x1A, 0x05, 0x00, 0x94]   # source: IC-9700 CI-V Reference Guide p.7
+get_ext_preamp_1200 = [0x1A, 0x05, 0x00, 0x95]  # source: IC-9700 CI-V Reference Guide p.7
+set_ext_preamp_1200 = [0x1A, 0x05, 0x00, 0x95]  # source: IC-9700 CI-V Reference Guide p.7
 # nb_depth/nb_width: AMBIGUOUS -- no single global NB depth/width; per-band
 # only. Declared absent rather than guessing a band (D2, MOR-2015).
 get_nb_depth = { absent = "IC-9700 CI-V Reference Guide p.11: no single global NB depth/width; per-band only (0322/0325/0328 resp. 0323/0326/0329), unreachable by this single-key command" }

@@ -524,6 +524,13 @@ async def _dispatch_http_routes(
         await server._handle_http_managed_tx(path, writer, headers, reader)
         return
 
+    if path == "/api/v1/radio/menu-toggles":
+        if method not in ("GET", "PUT"):
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_menu_toggles(method, writer, headers, reader)
+        return
+
     if path == "/api/v1/bridge":
         if method not in ("GET", "HEAD", "POST", "DELETE"):
             await _send_response(writer, 405, "Method Not Allowed", b"", {})
