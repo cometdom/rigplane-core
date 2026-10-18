@@ -489,6 +489,8 @@ _OBSERVABLE_CMD16_VALUE_FIELDS = {
     # break_in (MOR-1493, global): same BCD-nibble decode, 3-valued
     # (OFF/SEMI/FULL) rather than a plain toggle.
     0x47: (("global", "operator_controls", "break_in"), "bcd_nibble"),
+    # ssb_tx_bandwidth: 00 WIDE / 01 MID / 02 NAR, single byte.
+    0x58: (("global", "operator_controls", "ssb_tx_bandwidth"), "bcd_nibble"),
 }
 
 

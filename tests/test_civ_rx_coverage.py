@@ -4868,6 +4868,18 @@ def test_update_radio_state_cmd16_break_in_observation_backed(
     assert field.value == 2
 
 
+def test_update_radio_state_cmd16_ssb_tx_bandwidth_observation_backed(
+    radio_with_state: IcomRadio,
+) -> None:
+    """cmd 0x16/0x58 (SSB TX bandwidth) reaches the StateStore."""
+    frame = _make_frame(cmd=0x16, sub=0x58, data=b"\x02")
+    radio_with_state._civ_runtime._update_state_cache_from_frame(frame)
+    field = radio_with_state._state_store.snapshot().field(
+        "global.operator_controls.ssb_tx_bandwidth"
+    )
+    assert field.value == 2
+
+
 def test_update_radio_state_cmd16_twin_peak_filter_observation_backed(
     radio_with_state: IcomRadio,
 ) -> None:

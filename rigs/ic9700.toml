@@ -167,7 +167,6 @@ polling_only = [
     "receiver.main.operator_controls.nr_level",
     "receiver.main.operator_controls.pbt_inner",
     "receiver.main.operator_controls.pbt_outer",
-    "global.tx_state.dual_watch",
     "global.tx_state.monitor_on",
     "global.tx_state.vox_on",
     "global.tx_state.rit_on",
