@@ -359,6 +359,28 @@ describe('key intent gating', () => {
     }, { onRequestKey, onRequestUnkey });
   });
 
+  it('a mouse press does not leave PTT focused, so a later Space cannot re-key it', () => {
+    const onRequestKey = vi.fn();
+    withSurface(topologyFixtures['1/single'], IDLE_RX, (s) => {
+      s.key().focus();
+      s.key().dispatchEvent(new MouseEvent('click', { detail: 1, bubbles: true }));
+      flushSync();
+      expect(onRequestKey).toHaveBeenCalledTimes(1);
+      expect(document.activeElement).not.toBe(s.key());
+    }, { onRequestKey, onRequestUnkey: vi.fn() });
+  });
+
+  it('a deliberate keyboard activation (detail 0) keeps PTT focused', () => {
+    const onRequestKey = vi.fn();
+    withSurface(topologyFixtures['1/single'], IDLE_RX, (s) => {
+      s.key().focus();
+      s.key().dispatchEvent(new MouseEvent('click', { detail: 0, bubbles: true }));
+      flushSync();
+      expect(onRequestKey).toHaveBeenCalledTimes(1);
+      expect(document.activeElement).toBe(s.key());
+    }, { onRequestKey, onRequestUnkey: vi.fn() });
+  });
+
   it('PTT toggle stays closed while a latched release is already in flight', () => {
     const onRequestKey = vi.fn();
     const onRequestUnkey = vi.fn();

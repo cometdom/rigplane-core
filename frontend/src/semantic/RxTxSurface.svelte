@@ -97,9 +97,15 @@
   let releaseOnPress = $derived(
     tx.intent === 'latched' && (tx.phase === 'key-confirm-pending' || tx.phase === 'active'),
   );
-  function pressKey(): void {
+  function pressKey(event?: MouseEvent): void {
     if (releaseOnPress) onRequestUnkey();
     else onRequestKey();
+    // A pointer press (detail > 0) gives focus back, so a later Space or
+    // Enter cannot re-activate PTT by accident; a deliberate keyboard
+    // activation (detail 0) keeps focus where the operator put it.
+    if (event && event.detail > 0 && event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.blur();
+    }
   }
   let showTxState = $derived(
     tx.phase !== 'idle' || rf === 'transmitting' || rf === 'uncertain' || tx.fault !== null,
