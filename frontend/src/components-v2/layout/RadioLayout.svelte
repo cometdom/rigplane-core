@@ -43,6 +43,8 @@
   import type { FilterInstrumentHandles } from '../../semantic/filter-instruments';
   import { getManagedAppTxController } from '$lib/runtime/tx-controller/managed-app-host';
   import KeyboardHandler from './KeyboardHandler.svelte';
+  import SsbTxBandwidthControl from '../wiring/SsbTxBandwidthControl.svelte';
+  import type { BandInstrumentHandles } from '../../semantic/band-instruments';
   import StatusBar from './StatusBar.svelte';
   import MetersDockPanel from '../panels/MetersDockPanel.svelte';
   import { t } from '$lib/i18n';
@@ -292,12 +294,14 @@
   let semanticDeck = $derived(declared.has('vfo'));
   // RemoteMyRig: the rarely-adjusted groups share one tabbed row under the
   // controls. TX state, faults and PTT/UNKEY stay in the always-visible row.
-  type RemoteMyRigTab = 'tx' | 'cw' | 'ritXitScan' | 'band' | 'memory' | 'repeater';
+  type RemoteMyRigTab = 'tx' | 'cw' | 'ritXitScan' | 'memory' | 'repeater';
+  const rmrChrome = (panelId: string): PanelChrome => ({
+    panelId, draggable: false, onDragStart: () => undefined, style: '',
+  });
   const REMOTEMYRIG_TABS: readonly { id: RemoteMyRigTab; key: string }[] = [
     { id: 'tx', key: 'core.remotemyrig.tab.tx' },
     { id: 'cw', key: 'core.remotemyrig.tab.cw' },
     { id: 'ritXitScan', key: 'core.remotemyrig.tab.ritXitScan' },
-    { id: 'band', key: 'core.remotemyrig.tab.band' },
     { id: 'memory', key: 'core.remotemyrig.tab.memory' },
     { id: 'repeater', key: 'core.remotemyrig.tab.repeater' },
   ];
@@ -684,6 +688,10 @@
   </div>{/if}
 {/snippet}
 
+{#snippet rmrBandLayout(bandInstruments: BandInstrumentHandles)}
+  <div class="rmr-band-strip">{@render bandInstruments.bandChoice(true)}</div>
+{/snippet}
+
 {#snippet vfoOperationControls()}
   <div class="vfo-operation-instrument-grid" data-testid="vfo-operation-instrument-grid">
     {#if instruments.vfoOperations.split}<div class="vfo-operation-instrument-seat" data-field="split">{@render instruments.vfoOperations.split()}</div>{/if}
@@ -885,7 +893,11 @@
       </div>
 
       <div class="rmr-mode">
-        {@render instruments.filter(undefined, standardModeLayout, undefined, standardFilterLayout)}
+        {@render instruments.filter(
+          undefined, standardModeLayout, rmrChrome('rmr-mode'),
+          standardFilterLayout, rmrChrome('rmr-filter'),
+        )}
+        {@render instruments.band(undefined, rmrBandLayout, rmrChrome('rmr-band'))}
       </div>
 
       <div class="rmr-scope">
@@ -923,14 +935,13 @@
         </div>
         {#if remoteMyRigTab !== null}<div class="rmr-tab-panel" role="tabpanel" data-tab={remoteMyRigTab}>
           {#if remoteMyRigTab === 'tx'}
+            <SsbTxBandwidthControl />
             {@render instruments.txAuxControls(txAuxInstrumentLayout)}
+            {@render instruments.antenna()}
           {:else if remoteMyRigTab === 'cw'}
             {@render instruments.cwKeyer()}
           {:else if remoteMyRigTab === 'ritXitScan'}
             {@render instruments.ritXitScan()}
-          {:else if remoteMyRigTab === 'band'}
-            {@render instruments.band()}
-            {@render instruments.antenna()}
           {:else if remoteMyRigTab === 'memory'}
             {@render instruments.memory()}
           {:else}

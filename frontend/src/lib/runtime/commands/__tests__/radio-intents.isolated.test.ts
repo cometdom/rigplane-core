@@ -487,6 +487,7 @@ describe('typed non-PTT radio intents', () => {
       { name: 'set_mic_gain', params: { level: 10 } },
       { name: 'set_af_level', params: { level: 50 / 255, receiver: 1 } },
       { name: 'set_cw_pitch', params: { value: 10 } },
+      { name: 'set_ssb_tx_bw', params: { value: 1 } },
       { name: 'set_pbt_inner', params: { value: 10, receiver: 0 } },
       { name: 'set_data_mode', params: { mode: 1, receiver: 1 } },
       { name: 'set_data3_mod_input', params: { source: 2 } },
@@ -534,8 +535,10 @@ describe('typed non-PTT radio intents', () => {
     // MOR-2111 PR2 adds the five repeater family intents (90 + 5).
     // MOR-2583 PR2 adds the server-owned monitor MUTE (95 + 1).
     // MOR-2640 adds the NARROW toggle (96 + 1).
-    expect(intents.RADIO_INTENT_NAMES).toHaveLength(97);
-    expect(new Set(intents.RADIO_INTENT_NAMES).size).toBe(97);
+    // RemoteMyRig adds the SSB TX bandwidth preset (97 + 1).
+    expect(intents.RADIO_INTENT_NAMES).toHaveLength(98);
+    expect(new Set(intents.RADIO_INTENT_NAMES).size).toBe(98);
+    expect(intents.RADIO_INTENT_NAMES).toContain('set_ssb_tx_bw');
     expect(intents.RADIO_INTENT_NAMES).toContain('set_narrow');
     expect(intents.RADIO_INTENT_NAMES).toContain('set_monitor_mute');
     expect(intents.RADIO_INTENT_NAMES).toContain('reset_filter_width');

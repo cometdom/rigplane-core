@@ -363,7 +363,6 @@
   "core.remotemyrig.tab.tx": "TX",
   "core.remotemyrig.tab.cw": "CW",
   "core.remotemyrig.tab.ritXitScan": "RIT / XIT / SCAN",
-  "core.remotemyrig.tab.band": "BANDS",
   "core.remotemyrig.tab.memory": "MEMORY",
   "core.remotemyrig.tab.repeater": "REPEATER"
 }

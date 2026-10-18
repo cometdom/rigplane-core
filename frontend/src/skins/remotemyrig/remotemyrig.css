@@ -13,11 +13,13 @@
 .remotemyrig-face > .rmr-grid { grid-row: 3; grid-column: 1; }
 .radio-layout.desktop-control-face.remotemyrig-face > .receiver-deck.rmr-grid {
   display: grid;
-  grid-template-rows: auto auto minmax(220px, 1fr) auto auto;
+  grid-template-rows: auto auto minmax(160px, 1fr) auto auto;
+  overflow-y: auto;
   gap: 6px;
   padding: 6px;
   min-height: 0;
 }
+.remotemyrig-face .rmr-meters .meters-surface { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .remotemyrig-face .rmr-top {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 22%);
@@ -82,11 +84,12 @@
   border-radius: 6px;
   box-shadow: 0 -8px 24px rgb(0 0 0 / 50%);
 }
-/* Mode choices in one row, width slider beside them. */
-.radio-layout.remotemyrig-face .rmr-mode .filter-surface {
-  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+/* Mode, filter and band panels share one row; each keeps its keys on a line. */
+.remotemyrig-face .rmr-mode {
+  display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; min-width: 0;
 }
-.radio-layout.remotemyrig-face .rmr-mode .standard-mode-layout { flex: 1 1 760px; min-width: 0; flex-direction: row; align-items: center; }
+.remotemyrig-face .rmr-mode > * { flex: 1 1 auto; min-width: 0; }
+.radio-layout.remotemyrig-face .rmr-mode .standard-mode-layout { flex-direction: row; align-items: center; }
 .radio-layout.remotemyrig-face .rmr-mode .standard-choice-grid {
   display: grid;
   grid-template-columns: none;
@@ -94,7 +97,15 @@
   grid-auto-columns: minmax(48px, 1fr);
   gap: 4px;
 }
-.radio-layout.remotemyrig-face .rmr-mode .filter-level { flex: 1 1 280px; min-width: 220px; }
+.radio-layout.remotemyrig-face .rmr-mode .filter-surface {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+}
+.radio-layout.remotemyrig-face .rmr-mode .filter-surface > * { flex: 1 1 auto; min-width: 0; }
+.radio-layout.remotemyrig-face .rmr-mode .filter-finite-grid {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+}
+.radio-layout.remotemyrig-face .rmr-mode .filter-level { min-width: 200px; }
+.remotemyrig-face .rmr-band-strip { min-width: 0; }
 /* RF: two sliders side by side, finite rows in two columns below. */
 .radio-layout.remotemyrig-face .rmr-controls .rf-front-end-surface {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: start;

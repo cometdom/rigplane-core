@@ -32,7 +32,7 @@ const intentSpecs = [
   { names: ['set_af_level'], params: { level: 'normalized', receiver: 'receiver' } },
   { names: ['set_rf_power'], params: { level: 'number', level_unit: 'normalized-unit?' } },
   { names: ['set_nb_level', 'set_nr_level', 'set_preamp', 'set_rf_gain', 'set_squelch'], params: { level: 'integer', receiver: 'receiver' } },
-  { names: ['set_cw_pitch', 'set_tuner_status'], params: { value: 'integer' } },
+  { names: ['set_cw_pitch', 'set_ssb_tx_bw', 'set_tuner_status'], params: { value: 'integer' } },
   { names: ['set_agc_time_constant', 'set_manual_notch_width', 'set_notch_filter', 'set_pbt_inner', 'set_pbt_outer'], params: { value: 'integer', receiver: 'receiver' } },
   { names: ['set_agc', 'set_apf', 'set_data_mode'], params: { mode: 'integer', receiver: 'receiver' } },
   { names: ['set_data_off_mod_input', 'set_data1_mod_input', 'set_data2_mod_input', 'set_data3_mod_input'], params: { source: 'integer' } },
