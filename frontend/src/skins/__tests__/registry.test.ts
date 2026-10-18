@@ -39,6 +39,7 @@ const entrypoints = vi.hoisted(() => {
     'unified-instrument': { name: 'unified-instrument' },
     'panadapter-first': { name: 'panadapter-first' },
     'sdr-test': { name: 'sdr-test' },
+    remotemyrig: { name: 'remotemyrig' },
     'dual-receiver-cockpit': { name: 'dual-receiver-cockpit' },
     'dual-sdr-face': { name: 'dual-sdr-face' },
     'flagship-probe': { name: 'flagship-probe' },
@@ -56,6 +57,7 @@ const lazyImports = vi.hoisted(() => {
     'unified-instrument': vi.fn(() => ({ default: entrypoints['unified-instrument'] })),
     'panadapter-first': vi.fn(() => ({ default: entrypoints['panadapter-first'] })),
     'sdr-test': vi.fn(() => ({ default: entrypoints['sdr-test'] })),
+    remotemyrig: vi.fn(() => ({ default: entrypoints.remotemyrig })),
     'dual-receiver-cockpit': vi.fn(() => ({ default: entrypoints['dual-receiver-cockpit'] })),
     'dual-sdr-face': vi.fn(() => ({ default: entrypoints['dual-sdr-face'] })),
     'flagship-probe': vi.fn(() => ({ default: entrypoints['flagship-probe'] })),
@@ -71,6 +73,7 @@ vi.mock('../lcd-peer-split/LcdPeerSplitSkin.svelte', () => lazyImports['peer-spl
 vi.mock('../lcd-unified-instrument/LcdUnifiedInstrumentSkin.svelte', () => lazyImports['unified-instrument']());
 vi.mock('../lcd-panadapter-first/LcdPanadapterFirstSkin.svelte', () => lazyImports['panadapter-first']());
 vi.mock('../sdr-test/SdrTestSkin.svelte', () => lazyImports['sdr-test']());
+vi.mock('../remotemyrig/RemoteMyRigSkin.svelte', () => lazyImports.remotemyrig());
 vi.mock('../dual-receiver-cockpit/DualReceiverCockpit.svelte', () => lazyImports['dual-receiver-cockpit']());
 vi.mock('../dual-sdr-face/DualSdrFaceSkin.svelte', () => lazyImports['dual-sdr-face']());
 vi.mock('../flagship-probe/FlagshipProbeSkin.svelte', () => lazyImports['flagship-probe']());
@@ -129,7 +132,7 @@ describe('skin registry', () => {
   it('gives mobile precedence over every forced layout preference', () => {
     for (const layoutPreference of [
       'auto', 'lcd', 'lcd-cockpit', 'lcd-scope', 'standard', 'sdr-test', 'peer-split',
-      'unified-instrument', 'panadapter-first', 'dual-sdr-face',
+      'unified-instrument', 'panadapter-first', 'dual-sdr-face', 'remotemyrig',
     ] as const) {
       expect(resolve({ isMobile: true, layoutPreference, hasAnyScope: true })).toBe('mobile');
     }
@@ -147,6 +150,7 @@ describe('skin registry', () => {
     ['unified-instrument', 'unified-instrument'],
     ['panadapter-first', 'panadapter-first'],
     ['dual-sdr-face', 'dual-sdr-face'],
+    ['remotemyrig', 'remotemyrig'],
   ] as const)('resolves forced %s preference to %s', (layoutPreference, skinId) => {
     expect(resolve({ layoutPreference, hasAnyScope: false, capabilities: MAIN_SUB })).toBe(skinId);
   });
@@ -162,6 +166,7 @@ describe('skin registry', () => {
     ['lcd-scope', 'lcd-scope'],
     ['sdr-test', 'sdr-test'],
     ['dual-sdr-face', 'dual-sdr-face'],
+    ['remotemyrig', 'remotemyrig'],
   ] as const)('resolves forced %s preference to %s before capabilities arrive', (layoutPreference, skinId) => {
     expect(resolve({ layoutPreference, capabilities: null })).toBe(skinId);
   });
@@ -201,6 +206,7 @@ describe('skin registry', () => {
     ['unified-instrument', entrypoints['unified-instrument'], lazyImports['unified-instrument']],
     ['panadapter-first', entrypoints['panadapter-first'], lazyImports['panadapter-first']],
     ['sdr-test', entrypoints['sdr-test'], lazyImports['sdr-test']],
+    ['remotemyrig', entrypoints.remotemyrig, lazyImports.remotemyrig],
     ['dual-sdr-face', entrypoints['dual-sdr-face'], lazyImports['dual-sdr-face']],
   ] as const;
 
@@ -323,6 +329,7 @@ describe('presentation resource plan', () => {
     'unified-instrument': ['audio-fft'],
     'panadapter-first': ['audio-fft', 'hardware-scope'],
     'sdr-test': ['audio-fft', 'hardware-scope'],
+    remotemyrig: ['audio-fft', 'hardware-scope'],
     'lcd-cockpit': ['audio-fft'],
     'lcd-scope': ['audio-fft'],
     // The mobile layout mounts SpectrumPanel but no audio-FFT surface.
@@ -360,6 +367,7 @@ describe('presentation host mode', () => {
   const EXPECTED_HOST_MODE: Record<SkinId, PresentationHostMode> = {
     'desktop-v2': 'instrument-handles',
     'sdr-test': 'instrument-handles',
+    remotemyrig: 'instrument-handles',
     'dual-receiver-cockpit': 'self-contained',
     'lcd-cockpit': 'self-contained',
     'lcd-scope': 'self-contained',

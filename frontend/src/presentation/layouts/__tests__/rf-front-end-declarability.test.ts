@@ -57,7 +57,7 @@ describe('exactly the reviewed manifests declare an rfFrontEnd zone (MOR-1366)',
   // review this literal exists to force: the same declaration retires that
   // face's legacy twins through the `declared.has(...)` channel.
   // T160 PR-1 added `flagship-probe`, which places this surface in its left rail.
-  const DECLARES_RF_FRONT_END = ['desktop-v2', 'flagship-probe', 'sdr-test'];
+  const DECLARES_RF_FRONT_END = ['desktop-v2', 'flagship-probe', 'remotemyrig', 'sdr-test'];
 
   // [id, manifest] pairs derived from the barrel's export surface
   // (MOR-2061) — never hand-listed. See `manifest-guard.ts`.

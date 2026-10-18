@@ -359,5 +359,11 @@
   "core.settings.radioMenu.extPreamp1200": "Préampli externe 1200 MHz",
   "core.settings.radioMenu.empty": "Ce poste n'expose ici aucun réglage de menu.",
   "core.settings.radioMenu.loadError": "Impossible de lire les réglages de menu du poste.",
-  "core.settings.radioMenu.writeError": "Le poste n'a pas accepté la modification."
+  "core.settings.radioMenu.writeError": "Le poste n'a pas accepté la modification.",
+  "core.remotemyrig.tab.tx": "TX",
+  "core.remotemyrig.tab.cw": "CW",
+  "core.remotemyrig.tab.ritXitScan": "RIT / XIT / SCAN",
+  "core.remotemyrig.tab.band": "BANDES",
+  "core.remotemyrig.tab.memory": "MÉMOIRES",
+  "core.remotemyrig.tab.repeater": "RÉPÉTEUR"
 }

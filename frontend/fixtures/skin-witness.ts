@@ -30,6 +30,7 @@ import LcdScopeSkin from '../src/skins/lcd-scope/LcdScopeSkin.svelte';
 import FlagshipProbeSkin from '../src/skins/flagship-probe/FlagshipProbeSkin.svelte';
 import DualSdrFaceSkin from '../src/skins/dual-sdr-face/DualSdrFaceSkin.svelte';
 import DesktopShellWitness from './DesktopShellWitness.svelte';
+import RemoteMyRigShellWitness from './RemoteMyRigShellWitness.svelte';
 import { fixtureById } from './catalog';
 import { DEFAULT_AUDIO_RUNTIME, harness, IDLE_TX } from './harness-state';
 import { clearCapabilities, setCapabilities } from '../src/lib/stores/capabilities.svelte';
@@ -41,6 +42,7 @@ const SKINS = {
   'flagship-probe': FlagshipProbeSkin,
   'dual-sdr-face': DualSdrFaceSkin,
   'desktop-v2': DesktopShellWitness,
+  'remotemyrig': RemoteMyRigShellWitness,
 } as const;
 type WitnessSkin = keyof typeof SKINS;
 

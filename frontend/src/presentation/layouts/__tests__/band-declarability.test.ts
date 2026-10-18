@@ -65,7 +65,7 @@ describe('exactly the reviewed manifests declare a band zone (MOR-1367)', () => 
   // itself keeps rendering — it is the only production host of the broadcast
   // presets. Measured on the rendered face, not inferred from the channel.
   // T160 PR-1 added `flagship-probe`, which places this surface in its left rail.
-  const DECLARES_BAND = ['desktop-v2', 'flagship-probe', 'sdr-test'];
+  const DECLARES_BAND = ['desktop-v2', 'flagship-probe', 'remotemyrig', 'sdr-test'];
 
   // [id, manifest] pairs derived from the barrel's export surface
   // (MOR-2061) — never hand-listed. See `manifest-guard.ts`.

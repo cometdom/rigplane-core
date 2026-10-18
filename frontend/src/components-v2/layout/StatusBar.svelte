@@ -135,6 +135,7 @@
     { value: 'panadapter-first', label: 'LCD Panadapter' },
     { value: 'sdr-test', label: 'SDR Screen (test)' },
     { value: 'dual-sdr-face', label: 'Dual SDR Face' },
+    { value: 'remotemyrig', label: 'RemoteMyRig' },
   ];
 
   function handleSkinChange(ev: Event) {

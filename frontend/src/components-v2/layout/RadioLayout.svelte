@@ -277,7 +277,8 @@
   // honest to say (unlit keys by capability-gated facts), so that case keeps
   // the PR1 standalone fallback below instead of hosting a dead row.
   let scopeControlsInRegionContent = $derived(
-    (skinId === 'sdr-test' || skinId === 'desktop-v2') && declared.has('scopeControls') && hasSpectrum() && getScopeSource() === 'hardware',
+    (skinId === 'sdr-test' || skinId === 'desktop-v2' || skinId === 'remotemyrig')
+      && declared.has('scopeControls') && hasSpectrum() && getScopeSource() === 'hardware',
   );
 
   /** MOR-2545 PR2 (review fix) — the status indicator is handed to the
@@ -289,6 +290,18 @@
     hasAnyScope() && getScopeSource() !== 'audio_fft',
   );
   let semanticDeck = $derived(declared.has('vfo'));
+  // RemoteMyRig: the rarely-adjusted groups share one tabbed row under the
+  // controls. TX state, faults and PTT/UNKEY stay in the always-visible row.
+  type RemoteMyRigTab = 'tx' | 'cw' | 'ritXitScan' | 'band' | 'memory' | 'repeater';
+  const REMOTEMYRIG_TABS: readonly { id: RemoteMyRigTab; key: string }[] = [
+    { id: 'tx', key: 'core.remotemyrig.tab.tx' },
+    { id: 'cw', key: 'core.remotemyrig.tab.cw' },
+    { id: 'ritXitScan', key: 'core.remotemyrig.tab.ritXitScan' },
+    { id: 'band', key: 'core.remotemyrig.tab.band' },
+    { id: 'memory', key: 'core.remotemyrig.tab.memory' },
+    { id: 'repeater', key: 'core.remotemyrig.tab.repeater' },
+  ];
+  let remoteMyRigTab = $state<RemoteMyRigTab | null>(null);
   // R9 — ONE key/unkey authority, and this line is where that count is decided.
   //
   // It follows the DECK, not the `rxTx` declaration, and the asymmetry is
@@ -857,6 +870,74 @@
       {:else}
         {@render instruments.meters()}
       {/if}
+    </section>
+  </div>
+{:else if skinId === 'remotemyrig' && semanticDeck}
+  <div class="radio-layout desktop-control-face standard-face remotemyrig-face semantic-deck"
+    data-link-fault={linkFaultAttribute}>
+    <StatusBar onSettings={() => (settingsOpen = true)} {declared} showManagedTotControl={true} />
+    <KeyboardHandler config={keyboardConfig} onAction={keyboardHandlers.dispatch} />
+
+    <section class="receiver-deck rmr-grid" bind:this={receiverDeckElement} style={receiverDeckStyle}>
+      <div class="rmr-top">
+        <div class="rmr-vfo">{@render instruments.vfo('standard', undefined, vfoOperationControls)}</div>
+        <div class="rmr-meters">{@render instruments.meters()}</div>
+      </div>
+
+      <div class="rmr-mode">
+        {@render instruments.filter(undefined, standardModeLayout, undefined, standardFilterLayout)}
+      </div>
+
+      <div class="rmr-scope">
+        {#if !scopeControlsInRegionContent}{@render instruments.scopeControls()}{/if}
+        {#if !toolbarHostsScopeStatus}{@render instruments.scopeDisplay()}{/if}
+        {@render scopeRegion(
+          scopeControlsInRegionContent ? instruments.scopeControls : undefined,
+          instruments.managedScope,
+          toolbarHostsScopeStatus ? instruments.scopeDisplay : undefined,
+        )}
+      </div>
+
+      <div class="rmr-controls">
+        <div class="rmr-cell">{@render instruments.rfFrontEnd(undefined, rfFrontEndFiniteLayout)}</div>
+        <div class="rmr-cell">
+          {@render instruments.dsp(undefined, dspFiniteLayout, dspScalarLayout, undefined, 'dsp', true)}
+        </div>
+        <div class="rmr-cell">{@render instruments.rxAudio(undefined, rxAudioFiniteLayout)}</div>
+        <div class="rmr-cell rmr-tx">
+          {@render instruments.rxTx(undefined, undefined, standardTxLayout)}
+          {@render instruments.txFaultRecovery()}
+          {@render instruments.modInputTxWarning()}
+        </div>
+      </div>
+
+      <div class="rmr-tabs">
+        <div class="rmr-tab-bar" role="tablist">
+          {#each REMOTEMYRIG_TABS as tab (tab.id)}
+            <button
+              type="button" role="tab" class="rmr-tab" data-testid={`rmr-tab-${tab.id}`}
+              aria-selected={remoteMyRigTab === tab.id}
+              onclick={() => (remoteMyRigTab = remoteMyRigTab === tab.id ? null : tab.id)}
+            >{t(tab.key)}</button>
+          {/each}
+        </div>
+        {#if remoteMyRigTab !== null}<div class="rmr-tab-panel" role="tabpanel" data-tab={remoteMyRigTab}>
+          {#if remoteMyRigTab === 'tx'}
+            {@render instruments.txAuxControls(txAuxInstrumentLayout)}
+          {:else if remoteMyRigTab === 'cw'}
+            {@render instruments.cwKeyer()}
+          {:else if remoteMyRigTab === 'ritXitScan'}
+            {@render instruments.ritXitScan()}
+          {:else if remoteMyRigTab === 'band'}
+            {@render instruments.band()}
+            {@render instruments.antenna()}
+          {:else if remoteMyRigTab === 'memory'}
+            {@render instruments.memory()}
+          {:else}
+            {@render instruments.repeater?.()}
+          {/if}
+        </div>{/if}
+      </div>
     </section>
   </div>
 {:else}

@@ -36,7 +36,7 @@ import '../presentation/layouts/declarations';
 
 export type SkinId =
   | 'desktop-v2' | 'dual-receiver-cockpit' | 'lcd-cockpit' | 'lcd-scope' | 'mobile' | 'peer-split'
-  | 'sdr-test' | 'dual-sdr-face' | 'unified-instrument' | 'panadapter-first'
+  | 'sdr-test' | 'dual-sdr-face' | 'unified-instrument' | 'panadapter-first' | 'remotemyrig'
   | 'flagship-probe';
 
 export type PresentationId = string;
@@ -231,6 +231,7 @@ export function resolveSkinId(ctx: SkinResolutionContext): SkinId {
   if (layoutPreference === 'unified-instrument') return resolveWithFallback('unified-instrument', ctx.capabilities);
   if (layoutPreference === 'panadapter-first') return resolveWithFallback('panadapter-first', ctx.capabilities);
   if (layoutPreference === 'dual-sdr-face') return resolveWithFallback('dual-sdr-face', ctx.capabilities);
+  if (layoutPreference === 'remotemyrig') return resolveWithFallback('remotemyrig', ctx.capabilities);
   // MOR-1097 cutover: every non-mobile auto start uses the reworked
   // desktop-v2 composition. Scope availability remains presentation data, not
   // default-selection policy; explicit LCD preferences stay selectable.
@@ -311,6 +312,12 @@ const SKIN_LOADERS = {
     id: 'sdr-test',
     kind: 'built-in-instrument-layout',
     loader: () => import('./sdr-test/SdrTestSkin.svelte'),
+    resources: ['hardware-scope', 'audio-fft'],
+  },
+  'remotemyrig': {
+    id: 'remotemyrig',
+    kind: 'built-in-instrument-layout',
+    loader: () => import('./remotemyrig/RemoteMyRigSkin.svelte'),
     resources: ['hardware-scope', 'audio-fft'],
   },
   // T160 PR-1 — the flagship geometry probe. Self-contained, like the

@@ -103,7 +103,7 @@ describe('DualSdrFaceSkin production entrypoint', () => {
         hasAnyScope: true,
       });
       const target = document.createElement('div');
-      const mounted = skinId === 'desktop-v2' || skinId === 'sdr-test'
+      const mounted = skinId === 'desktop-v2' || skinId === 'sdr-test' || skinId === 'remotemyrig'
         ? mount(await loadSkin(skinId), { target, props: { instruments: TEST_INSTRUMENTS } })
         : mount(await loadSkin(skinId), { target });
 

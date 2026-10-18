@@ -136,6 +136,7 @@ const WIDTH_FOR: Record<SkinId, number> = {
   'lcd-cockpit': 1000,
   'lcd-scope': 900,
   'sdr-test': 1400,
+  remotemyrig: 1400,
   'mobile': 390,
   // MOR-2155: this file's TX-authority sweeps never request `peer-split`
   // directly, so this entry is here only to satisfy `Record<SkinId, number>`

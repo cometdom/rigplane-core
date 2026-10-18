@@ -359,5 +359,11 @@
   "core.settings.radioMenu.extPreamp1200": "External P.AMP 1200 MHz",
   "core.settings.radioMenu.empty": "This radio exposes no menu settings here.",
   "core.settings.radioMenu.loadError": "Could not read the radio menu settings.",
-  "core.settings.radioMenu.writeError": "The radio did not accept the change."
+  "core.settings.radioMenu.writeError": "The radio did not accept the change.",
+  "core.remotemyrig.tab.tx": "TX",
+  "core.remotemyrig.tab.cw": "CW",
+  "core.remotemyrig.tab.ritXitScan": "RIT / XIT / SCAN",
+  "core.remotemyrig.tab.band": "BANDS",
+  "core.remotemyrig.tab.memory": "MEMORY",
+  "core.remotemyrig.tab.repeater": "REPEATER"
 }

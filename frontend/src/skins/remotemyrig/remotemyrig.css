@@ -1,0 +1,119 @@
+/* RemoteMyRig row layout (RadioLayout `remotemyrig` branch).
+   Rows: VFO + TX meters / mode-filter / scope / controls / tabs. The scope
+   row is capped so the control rows below it fit a 1920x1080 screen. */
+.radio-layout.desktop-control-face.standard-face.remotemyrig-face {
+  height: 100%;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+}
+.remotemyrig-face > .control-link-lost { grid-row: 1; grid-column: 1; }
+.remotemyrig-face > .status-bar { grid-row: 2; grid-column: 1; }
+.remotemyrig-face > .rmr-grid { grid-row: 3; grid-column: 1; }
+.radio-layout.desktop-control-face.remotemyrig-face > .receiver-deck.rmr-grid {
+  display: grid;
+  grid-template-rows: auto auto minmax(220px, 1fr) auto auto;
+  gap: 6px;
+  padding: 6px;
+  min-height: 0;
+}
+.remotemyrig-face .rmr-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 22%);
+  gap: 6px;
+  align-items: start;
+}
+.remotemyrig-face .rmr-vfo,
+.remotemyrig-face .rmr-meters,
+.remotemyrig-face .rmr-mode,
+.remotemyrig-face .rmr-cell { min-width: 0; }
+.remotemyrig-face .rmr-scope {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.radio-layout.desktop-control-face.remotemyrig-face .rmr-scope .content-row {
+  display: flex; flex: 1; min-height: 0; contain: none;
+}
+.remotemyrig-face .rmr-scope .content-center { width: 100%; }
+.remotemyrig-face .rmr-scope .spectrum-toolbar { height: auto; min-height: 32px; }
+.remotemyrig-face .rmr-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
+}
+.remotemyrig-face .rmr-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 4px;
+  position: relative;
+}
+.remotemyrig-face .rmr-tab-bar { display: flex; flex-wrap: wrap; gap: 4px; }
+.remotemyrig-face .rmr-tab {
+  padding: 4px 12px;
+  color: var(--v2-text-secondary, inherit);
+  background: var(--v2-bg-card, transparent);
+  border: 1px solid var(--v2-border-darker, currentColor);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.remotemyrig-face .rmr-tab[aria-selected='true'] {
+  color: var(--v2-text-primary, inherit);
+  border-color: var(--v2-accent, currentColor);
+}
+.remotemyrig-face .rmr-tab-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 4px);
+  z-index: 20;
+  max-height: 45vh;
+  overflow: auto;
+  padding: 6px;
+  background: var(--v2-bg-primary, #0b0f17);
+  border: 1px solid var(--v2-border-darker, #333);
+  border-radius: 6px;
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 50%);
+}
+/* Mode choices in one row, width slider beside them. */
+.radio-layout.remotemyrig-face .rmr-mode .filter-surface {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+}
+.radio-layout.remotemyrig-face .rmr-mode .standard-mode-layout { flex: 1 1 760px; min-width: 0; flex-direction: row; align-items: center; }
+.radio-layout.remotemyrig-face .rmr-mode .standard-choice-grid {
+  display: grid;
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(48px, 1fr);
+  gap: 4px;
+}
+.radio-layout.remotemyrig-face .rmr-mode .filter-level { flex: 1 1 280px; min-width: 220px; }
+/* RF: two sliders side by side, finite rows in two columns below. */
+.radio-layout.remotemyrig-face .rmr-controls .rf-front-end-surface {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: start;
+}
+.radio-layout.remotemyrig-face .rmr-controls .rf-front-end-finite-grid {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 8px; align-items: center;
+}
+/* RX audio: two columns of seats. */
+.radio-layout.remotemyrig-face .rmr-controls .rx-audio-finite-grid {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 8px; align-items: start;
+}
+/* TX: PTT and UNKEY side by side, a shorter key, three columns of TX keys. */
+.radio-layout.desktop-control-face.standard-face.remotemyrig-face .rmr-tx .rx-tx-surface.standard .rx-tx-actions {
+  grid-template-columns: 2fr 1fr; align-items: stretch;
+}
+.radio-layout.desktop-control-face.standard-face.remotemyrig-face .rmr-tx .rx-tx-surface.standard .rx-tx-actions .rx-tx-key.v2-control-button {
+  min-height: 48px; font-size: 1.25rem;
+}
+.radio-layout.desktop-control-face.standard-face.remotemyrig-face .rmr-tx .standard-tx-button-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}

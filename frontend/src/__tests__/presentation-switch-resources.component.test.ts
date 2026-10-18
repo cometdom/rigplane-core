@@ -226,6 +226,7 @@ const SKIN_PLAN: Record<SkinId, readonly AppResource[]> = {
   'unified-instrument': ['audio-fft'],
   'panadapter-first': ['hardware-scope', 'audio-fft'],
   'sdr-test': ['hardware-scope', 'audio-fft'],
+  remotemyrig: ['hardware-scope', 'audio-fft'],
   'dual-sdr-face': ['hardware-scope'],
   // T160 PR-1: one SpectrumPanel and no audio-FFT surface — the same plan
   // `mobile` above carries, for the same reason.
@@ -238,6 +239,7 @@ const WIDTH_FOR: Record<SkinId, number> = {
   'lcd-cockpit': 1000,
   'lcd-scope': 900,
   'sdr-test': 1400,
+  remotemyrig: 1400,
   'mobile': 390,
   'peer-split': 1600,
   'unified-instrument': 1280,

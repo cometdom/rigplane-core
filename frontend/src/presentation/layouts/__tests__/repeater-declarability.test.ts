@@ -41,7 +41,7 @@ describe('repeater is a declarable semantic surface', () => {
 
 describe('exactly the reviewed manifests declare a repeater zone (MOR-2111)', () => {
   /** The literal — extend by hand, with a layout review, never silently. */
-  const DECLARES_REPEATER: readonly string[] = ['desktop-v2'];
+  const DECLARES_REPEATER: readonly string[] = ['desktop-v2', 'remotemyrig'];
 
   // [id, manifest] pairs derived from the barrel's export surface
   // (MOR-2061) — never hand-listed. See `manifest-guard.ts`.

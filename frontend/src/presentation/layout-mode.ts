@@ -18,6 +18,8 @@
  *                 `skins/segmentline/PeerSplitLayout.svelte`)
  * 'unified-instrument' = force the segmentline dominant unified instrument
  * 'panadapter-first' = force the segmentline hardware-scope panadapter
+ * 'remotemyrig' = force the RemoteMyRig row layout (VFO and TX meters on top,
+ *                 a shorter scope, control rows and tabs below it)
  * 'dual-receiver-cockpit' = QA-ONLY (MOR-1257): reachable solely via the
  *                 exact `?layout=dual-receiver-cockpit` query param (see
  *                 `lib/stores/qa-cockpit-override.ts`) — deliberately NOT a
@@ -32,7 +34,7 @@
 export type LayoutMode =
   | 'auto' | 'lcd' | 'lcd-cockpit' | 'lcd-scope' | 'standard' | 'sdr-test'
   | 'peer-split' | 'unified-instrument' | 'panadapter-first'
-  | 'dual-sdr-face' | 'dual-receiver-cockpit' | 'flagship-probe';
+  | 'dual-sdr-face' | 'remotemyrig' | 'dual-receiver-cockpit' | 'flagship-probe';
 export type CanonicalLayoutMode =
   Exclude<LayoutMode, 'lcd' | 'dual-receiver-cockpit' | 'flagship-probe'>;
 
@@ -46,6 +48,7 @@ export const CANONICAL_LAYOUT_MODES = new Set<CanonicalLayoutMode>([
   'unified-instrument',
   'panadapter-first',
   'dual-sdr-face',
+  'remotemyrig',
 ]);
 
 export const LEGACY_LAYOUT_ALIASES: Record<string, CanonicalLayoutMode> = {

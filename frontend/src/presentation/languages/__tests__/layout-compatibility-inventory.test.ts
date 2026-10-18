@@ -166,6 +166,10 @@ describe('every barrel-exported layout is design-language-listed or explicitly e
       reason: 'minimal teaching example; no design-language chrome by design (owner ruling 2026-08-31, MOR-2070)',
     },
     {
+      layoutId: 'remotemyrig',
+      reason: 'personal-fork row layout over the shared desktop shell; it adds no design-language chrome',
+    },
+    {
       layoutId: 'flagship-probe',
       reason:
         'geometry probe: it places the semantic surfaces and adds no chrome, colour or type scale of '

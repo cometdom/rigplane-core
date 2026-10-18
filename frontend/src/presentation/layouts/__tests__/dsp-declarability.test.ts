@@ -50,7 +50,7 @@ describe('exactly the reviewed manifests declare a dsp zone (MOR-1368)', () => {
   // modal's `desktop-dsp` AND `desktop-agc` sections — because `DspSurface`
   // owns the AGC leaf (5A/MOR-1290) and AGC has no zone of its own.
   // T160 PR-1 added `flagship-probe`, which places this surface in its left rail.
-  const DECLARES_DSP = ['desktop-v2', 'flagship-probe', 'sdr-test'];
+  const DECLARES_DSP = ['desktop-v2', 'flagship-probe', 'remotemyrig', 'sdr-test'];
 
   // [id, manifest] pairs derived from the barrel's export surface
   // (MOR-2061) — never hand-listed. See `manifest-guard.ts`.

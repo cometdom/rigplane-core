@@ -127,6 +127,7 @@ export { mobileLayout } from './mobile-declarations';
 // a real binding to assert against (the M7 lesson — a bare side-effect
 // import would let this line be dropped without any test noticing).
 export { desktopV2Layout } from './desktop-declarations';
+export { remoteMyRigLayout } from './remotemyrig-declarations';
 // MOR-2151 registration — see that file. Re-exported for the same reason as
 // the other family imports above: this barrel is the ONLY thing that wires
 // peer-split's manifest into the app, and a named re-export gives every test

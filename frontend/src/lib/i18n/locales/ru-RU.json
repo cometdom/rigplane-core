@@ -358,5 +358,11 @@
   "core.settings.radioMenu.extPreamp1200": "Внешний предусилитель 1200 МГц",
   "core.settings.radioMenu.empty": "У этого трансивера нет пунктов меню, доступных здесь.",
   "core.settings.radioMenu.loadError": "Не удалось прочитать настройки меню трансивера.",
-  "core.settings.radioMenu.writeError": "Трансивер не принял изменение."
+  "core.settings.radioMenu.writeError": "Трансивер не принял изменение.",
+  "core.remotemyrig.tab.tx": "TX",
+  "core.remotemyrig.tab.cw": "CW",
+  "core.remotemyrig.tab.ritXitScan": "RIT / XIT / СКАН",
+  "core.remotemyrig.tab.band": "ДИАПАЗОНЫ",
+  "core.remotemyrig.tab.memory": "ПАМЯТЬ",
+  "core.remotemyrig.tab.repeater": "РЕПИТЕР"
 }

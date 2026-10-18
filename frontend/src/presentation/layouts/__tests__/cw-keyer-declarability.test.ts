@@ -66,7 +66,7 @@ describe('exactly the reviewed manifests declare a cwKeyer zone (MOR-1368)', () 
    * updated sequence pin.
    */
   // T160 PR-1 added `flagship-probe`, which places this surface in its right rail.
-  const DECLARES_CW_KEYER = ['desktop-v2', 'flagship-probe', 'sdr-test'];
+  const DECLARES_CW_KEYER = ['desktop-v2', 'flagship-probe', 'remotemyrig', 'sdr-test'];
 
   // [id, manifest] pairs derived from the barrel's export surface
   // (MOR-2061) — never hand-listed. See `manifest-guard.ts`.

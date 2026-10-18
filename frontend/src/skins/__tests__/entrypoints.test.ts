@@ -125,6 +125,7 @@ type EntrypointCoverage =
 const SKIN_ENTRYPOINT_COVERAGE: Readonly<Record<SkinId, EntrypointCoverage>> = {
   'desktop-v2': { kind: 'radio-layout' },
   'sdr-test': { kind: 'radio-layout' },
+  remotemyrig: { kind: 'radio-layout' },
   'lcd-cockpit': { kind: 'lcd-layout', variant: 'cockpit' },
   'lcd-scope': { kind: 'lcd-layout', variant: 'scope' },
   'dual-receiver-cockpit': {
@@ -151,7 +152,7 @@ const SKIN_ENTRYPOINT_COVERAGE: Readonly<Record<SkinId, EntrypointCoverage>> = {
 const allSkinIds = Object.keys(SKIN_ENTRYPOINT_COVERAGE) as SkinId[];
 
 const radioLayoutSkinIds = allSkinIds.filter(
-  (id): id is 'desktop-v2' | 'sdr-test' => SKIN_ENTRYPOINT_COVERAGE[id].kind === 'radio-layout',
+  (id): id is 'desktop-v2' | 'sdr-test' | 'remotemyrig' => SKIN_ENTRYPOINT_COVERAGE[id].kind === 'radio-layout',
 );
 
 type LcdLayoutSkinId = 'lcd-cockpit' | 'lcd-scope' | 'peer-split' | 'unified-instrument' | 'panadapter-first';

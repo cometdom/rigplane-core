@@ -57,7 +57,7 @@ describe('exactly the reviewed manifests declare a meters zone (MOR-1341)', () =
    *  semantic surface ALONGSIDE the never-suppressed legacy dock — the same
    *  double MOR-1341 closed for `desktop-v2`. */
   // T160 PR-1 added `flagship-probe`, which places this surface in its bottom dock.
-  const DECLARES_METERS = ['desktop-v2', 'flagship-probe', 'sdr-test'];
+  const DECLARES_METERS = ['desktop-v2', 'flagship-probe', 'remotemyrig', 'sdr-test'];
 
   // [id, manifest] pairs derived from the barrel's export surface
   // (MOR-2061) — never hand-listed. See `manifest-guard.ts`.

@@ -50,7 +50,7 @@ describe('exactly the reviewed manifests declare a ritXitScan zone (MOR-1367)', 
   // review this literal exists to force: the same declaration retires that
   // face's legacy twins through the `declared.has(...)` channel.
   // T160 PR-1 added `flagship-probe`, which places this surface in its right rail.
-  const DECLARES_RITXIT_SCAN = ['desktop-v2', 'flagship-probe', 'sdr-test'];
+  const DECLARES_RITXIT_SCAN = ['desktop-v2', 'flagship-probe', 'remotemyrig', 'sdr-test'];
 
   // [id, manifest] pairs derived from the barrel's export surface
   // (MOR-2061) — never hand-listed. See `manifest-guard.ts`.

@@ -359,5 +359,11 @@
   "core.settings.radioMenu.extPreamp1200": "外部プリアンプ 1200 MHz",
   "core.settings.radioMenu.empty": "この無線機にはここで変更できるメニュー設定がありません。",
   "core.settings.radioMenu.loadError": "無線機のメニュー設定を読み取れませんでした。",
-  "core.settings.radioMenu.writeError": "無線機が変更を受け付けませんでした。"
+  "core.settings.radioMenu.writeError": "無線機が変更を受け付けませんでした。",
+  "core.remotemyrig.tab.tx": "TX",
+  "core.remotemyrig.tab.cw": "CW",
+  "core.remotemyrig.tab.ritXitScan": "RIT / XIT / スキャン",
+  "core.remotemyrig.tab.band": "バンド",
+  "core.remotemyrig.tab.memory": "メモリー",
+  "core.remotemyrig.tab.repeater": "レピーター"
 }

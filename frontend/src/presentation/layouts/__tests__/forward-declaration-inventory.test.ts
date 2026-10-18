@@ -36,7 +36,7 @@ import { isLayoutManifest } from './manifest-guard';
 // sibling files. Only `desktopV2Layout`/`sdrTestLayout` are referenced by
 // name below (`sharedShellMounts`, and the last test's spread); every other
 // manifest is reached only through the derived `ALL_MANIFESTS`.
-import { desktopV2Layout, sdrTestLayout } from '../declarations';
+import { desktopV2Layout, remoteMyRigLayout, sdrTestLayout } from '../declarations';
 // Namespace import of the SAME barrel, used ONLY to derive ALL_MANIFESTS
 // structurally — never to register anything (a namespace import has no side
 // effect beyond the module evaluation the named import above already
@@ -65,6 +65,7 @@ const semanticHostSource = readFileSync('src/components-v2/wiring/SemanticRadioS
 const radioLayoutSource = readFileSync('src/components-v2/layout/RadioLayout.svelte', 'utf8');
 const desktopSkinSource = readFileSync('src/skins/desktop-v2/DesktopSkin.svelte', 'utf8');
 const sdrSkinSource = readFileSync('src/skins/sdr-test/SdrTestSkin.svelte', 'utf8');
+const remoteMyRigSkinSource = readFileSync('src/skins/remotemyrig/RemoteMyRigSkin.svelte', 'utf8');
 const lcdLayoutSource = readFileSync('src/components-v2/layout/LcdLayout.svelte', 'utf8');
 const mobileLayoutSource = readFileSync('src/components-v2/layout/MobileRadioLayout.svelte', 'utf8');
 const cockpitShellSource = readFileSync('src/skins/dual-receiver-cockpit/DualReceiverCockpit.svelte', 'utf8');
@@ -95,6 +96,7 @@ const shellResolvesThroughManifest =
 const hostedSkinSources: Readonly<Record<string, string>> = {
   'desktop-v2': desktopSkinSource,
   'sdr-test': sdrSkinSource,
+  'remotemyrig': remoteMyRigSkinSource,
 };
 const sharedShellMounts = (manifest: LayoutManifest): boolean => {
   const skinSource = hostedSkinSources[manifest.id];
@@ -123,6 +125,7 @@ const sharedShellMounts = (manifest: LayoutManifest): boolean => {
 const DOM_BACKED: Readonly<Record<string, () => boolean>> = {
   'sdr-test': () => sharedShellMounts(sdrTestLayout),
   'desktop-v2': () => sharedShellMounts(desktopV2Layout),
+  'remotemyrig': () => sharedShellMounts(remoteMyRigLayout),
   'lcd-cockpit': () => /<SemanticRadioSurfaces\s*\/>/.test(lcdLayoutSource),
   'lcd-scope': () => /<SemanticRadioSurfaces\s*\/>/.test(lcdLayoutSource),
   // MOR-1245: MobileRadioLayout passes `suppressModInputTxWarning` beside
