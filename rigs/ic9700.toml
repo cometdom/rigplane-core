@@ -342,7 +342,9 @@ max_watts = 100
 table = "standard_50"
 
 [modes]
-list = ["USB", "LSB", "CW", "CW-R", "AM", "FM", "RTTY", "RTTY-R"]
+# DV = 0x17, DD = 0x22: IC-9700 CI-V Reference Guide p.13. DD is accepted
+# only on the 1200 MHz band outside satellite mode (same page).
+list = ["USB", "LSB", "CW", "CW-R", "AM", "FM", "RTTY", "RTTY-R", "DV", "DD"]
 
 [data_mode]
 # CI-V 0x1A 0x06: DATA sub-mode (0=OFF, 1=DATA1)
@@ -464,6 +466,13 @@ segments = [
 [filters.width.FM]
 fixed = true
 defaults = [15000, 10000, 7000]
+
+# No 1A 03 width row for DV or DD (IC-9700 CI-V Reference Guide p.16).
+[filters.width.DV]
+fixed = true
+
+[filters.width.DD]
+fixed = true
 
 [vfo]
 # IC-9700 has two receivers (MAIN/SUB), not VFO A/B at the radio level.

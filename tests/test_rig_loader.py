@@ -2050,10 +2050,10 @@ class TestToProfile:
         and not others, which reads as "this radio has no PBT in CW" when it
         means "nobody filled CW in". So the modes left without a step must be
         exactly the ones with no twin PBT: the IC-7300 Advanced Manual p.40
-        heads its section "SSB, CW, RTTY and AM modes", which leaves FM, and
-        the FM variants WFM and DV that the IC-705 adds.
+        heads its section "SSB, CW, RTTY and AM modes", which leaves FM, the
+        FM variants WFM and DV that the IC-705 adds, and the IC-9700's DD.
         """
-        no_twin_pbt = {"FM", "WFM", "DV"}
+        no_twin_pbt = {"FM", "WFM", "DV", "DD"}
         checked = 0
         for name, config in sorted(discover_rigs(RIGS_DIR).items()):
             profile = config.to_profile()
@@ -2131,6 +2131,8 @@ class TestToProfile:
                 "RTTY-R": 50,
                 "AM": 200,
                 "FM": None,
+                "DV": None,
+                "DD": None,
             },
         }
         for name, per_mode in expected.items():

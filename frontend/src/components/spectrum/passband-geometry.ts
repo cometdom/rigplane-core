@@ -27,6 +27,7 @@ const SYMMETRIC_PASSBAND_MODES = new Set([
   'C4FM-DN',
   'C4FM-VW',
   'DV',
+  'DD',
 ]);
 
 function isSymmetricPassbandMode(normalizedMode: string): boolean {

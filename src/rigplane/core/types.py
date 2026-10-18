@@ -92,6 +92,7 @@ class Mode(IntEnum):
     PSK = 0x12
     PSK_R = 0x13
     DV = 0x17
+    DD = 0x22  # IC-9700 CI-V Reference Guide p.13
 
 
 class AgcMode(IntEnum):

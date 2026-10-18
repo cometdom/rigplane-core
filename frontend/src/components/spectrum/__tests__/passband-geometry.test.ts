@@ -28,6 +28,11 @@ describe('getPassbandEdgesHz', () => {
     expect(getPassbandEdgesHz('CW-R', 500, 0)).toEqual({ leftHz: -250, rightHz: 250 });
   });
 
+  it('centers the IC-9700 digital modes DV and DD around carrier', () => {
+    expect(getPassbandEdgesHz('DV', 7000, 0)).toEqual({ leftHz: -3500, rightHz: 3500 });
+    expect(getPassbandEdgesHz('DD', 150000, 0)).toEqual({ leftHz: -75000, rightHz: 75000 });
+  });
+
   it('centers FM passband around carrier (#1719)', () => {
     expect(getPassbandEdgesHz('FM', 15000, 0)).toEqual({ leftHz: -7500, rightHz: 7500 });
   });
