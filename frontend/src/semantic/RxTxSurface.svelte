@@ -90,6 +90,17 @@
   $effect(() => { if (!momentary || tx.fresh === false) endHold(); });
   onDestroy(() => { alive = false; endHold(); });
   let pressed = $derived(tx.phase !== 'idle' && tx.phase !== 'failed');
+  // Toggle PTT: while the operator's own latched transmit is pending or
+  // active, a second press releases it exactly as UNKEY does. A release
+  // already in flight, a fault, or a transmit this surface did not latch
+  // keeps the fail-closed key gate above.
+  let releaseOnPress = $derived(
+    tx.intent === 'latched' && (tx.phase === 'key-confirm-pending' || tx.phase === 'active'),
+  );
+  function pressKey(): void {
+    if (releaseOnPress) onRequestUnkey();
+    else onRequestKey();
+  }
   let showTxState = $derived(
     tx.phase !== 'idle' || rf === 'transmitting' || rf === 'uncertain' || tx.fault !== null,
   );
@@ -207,9 +218,9 @@
     <button
       type="button" class="rx-tx-key v2-control-button v2-control-button--pill" data-testid="rx-tx-key"
       data-surface="hardware" data-indicator-style="dot" data-indicator-color="red" data-active={pressed}
-      disabled={keyUnavailable} aria-pressed={pressed}
+      disabled={keyUnavailable && !releaseOnPress} aria-pressed={pressed}
       aria-describedby={blockedDescription ? blockedId : undefined}
-      onclick={onRequestKey}
+      onclick={pressKey}
       aria-label="Key transmitter"
     >{standard ? 'PTT' : 'Key transmitter'}</button>
     {/if}

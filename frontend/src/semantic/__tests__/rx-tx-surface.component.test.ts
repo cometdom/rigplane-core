@@ -310,7 +310,8 @@ describe('key intent gating', () => {
   it('requires both action callbacks and binds them directly without a silent optional path', () => {
     expect(rxTxSurfaceSource).toContain('onRequestKey: () => void;');
     expect(rxTxSurfaceSource).toContain('onRequestUnkey: () => void;');
-    expect(rxTxSurfaceSource).toContain('onclick={onRequestKey}');
+    expect(rxTxSurfaceSource).toContain('onclick={pressKey}');
+    expect(rxTxSurfaceSource).toContain('if (releaseOnPress) onRequestUnkey();\n    else onRequestKey();');
     expect(rxTxSurfaceSource).toContain('onclick={onRequestUnkey}');
     expect(rxTxSurfaceSource).not.toMatch(/onRequest(?:Key|Unkey)\?[:.]/);
   });
@@ -337,6 +338,38 @@ describe('key intent gating', () => {
       flushSync();
       expect(onRequestKey).toHaveBeenCalledTimes(1);
     }, { onRequestKey, onRequestUnkey: vi.fn() });
+  });
+
+  it.each([
+    ['an active latched transmission', snap({
+      phase: 'active', intent: 'latched', radioTx: 'on', txRisk: 'confirmed-on',
+    })],
+    ['a latched key awaiting confirmation', snap({
+      phase: 'key-confirm-pending', intent: 'latched', txRisk: 'uncertain',
+    })],
+  ] as const)('PTT toggles: during %s a press releases, never keys again', (_name, tx) => {
+    const onRequestKey = vi.fn();
+    const onRequestUnkey = vi.fn();
+    withSurface(topologyFixtures['1/single'], tx, (s) => {
+      expect(s.key().disabled).toBe(false);
+      s.key().click();
+      flushSync();
+      expect(onRequestUnkey).toHaveBeenCalledTimes(1);
+      expect(onRequestKey).not.toHaveBeenCalled();
+    }, { onRequestKey, onRequestUnkey });
+  });
+
+  it('PTT toggle stays closed while a latched release is already in flight', () => {
+    const onRequestKey = vi.fn();
+    const onRequestUnkey = vi.fn();
+    const releasing = snap({ phase: 'releasing', intent: 'latched', txRisk: 'uncertain' });
+    withSurface(topologyFixtures['1/single'], releasing, (s) => {
+      expect(s.key().disabled).toBe(true);
+      s.key().click();
+      flushSync();
+      expect(onRequestUnkey).not.toHaveBeenCalled();
+      expect(onRequestKey).not.toHaveBeenCalled();
+    }, { onRequestKey, onRequestUnkey });
   });
 
   it.each(IDS)('%s: audio-only scope does not change the key gate (scope is not a TX fact)', (id) => {
