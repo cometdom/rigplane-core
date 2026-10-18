@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import enUS from '../locales/en-US.json' with { type: 'json' };
+import frFR from '../locales/fr-FR.json' with { type: 'json' };
 import jaJP from '../locales/ja-JP.json' with { type: 'json' };
 import ruRU from '../locales/ru-RU.json' with { type: 'json' };
 import { FACEPLATE_INVARIANT_KEYS } from '../faceplate-invariant-keys';
@@ -15,6 +16,7 @@ import { FACEPLATE_INVARIANT_KEYS } from '../faceplate-invariant-keys';
 const enUSCatalog = enUS as unknown as Record<string, string>;
 
 const CATALOGS: Record<string, Record<string, string>> = {
+  'fr-FR': frFR as unknown as Record<string, string>,
   'ja-JP': jaJP as unknown as Record<string, string>,
   'ru-RU': ruRU as unknown as Record<string, string>,
 };
@@ -28,6 +30,7 @@ const INVARIANT_KEYS = new Set(FACEPLATE_INVARIANT_KEYS);
 // MOR-2717 translated the last of them, so every locale list is empty.
 // An entry may return only together with the key that needs it.
 const KNOWN_GAPS: Record<string, string[]> = {
+  'fr-FR': [],
   'ja-JP': [],
   'ru-RU': [],
 };

@@ -34,6 +34,7 @@
    */
   const ENDONYMS: Record<string, string> = {
     'en-US': 'English',
+    'fr-FR': 'Français',
     'ja-JP': '日本語',
     'ru-RU': 'Русский',
     // qps-ploc gets its label assembled at render time so the

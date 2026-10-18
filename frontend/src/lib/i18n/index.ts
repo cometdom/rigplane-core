@@ -36,6 +36,7 @@
  */
 
 import enUSCatalog from './locales/en-US.json' with { type: 'json' };
+import frFRCatalog from './locales/fr-FR.json' with { type: 'json' };
 import jaJPCatalog from './locales/ja-JP.json' with { type: 'json' };
 import ruRUCatalog from './locales/ru-RU.json' with { type: 'json' };
 
@@ -56,6 +57,7 @@ import {
 // Register bundled catalogs once at module load. `qps-ploc` is computed
 // on-the-fly by `resolvePseudo`; no JSON file ships for it.
 registerCatalog('en-US', enUSCatalog as Record<string, unknown>);
+registerCatalog('fr-FR', frFRCatalog as Record<string, unknown>);
 registerCatalog('ja-JP', jaJPCatalog as Record<string, unknown>);
 registerCatalog('ru-RU', ruRUCatalog as Record<string, unknown>);
 

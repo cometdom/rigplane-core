@@ -39,6 +39,7 @@
   import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
   import enUS from '$lib/i18n/locales/en-US.json' with { type: 'json' };
+  import frFR from '$lib/i18n/locales/fr-FR.json' with { type: 'json' };
   import jaJP from '$lib/i18n/locales/ja-JP.json' with { type: 'json' };
   import ruRU from '$lib/i18n/locales/ru-RU.json' with { type: 'json' };
   import FrequencyDisplayInteractive from '../primitives/frequency/FrequencyDisplayInteractive.svelte';
@@ -369,7 +370,7 @@
    * must cover the widest of them.
    */
   const ACTIVE_ROLE_KEY = 'core.vfo.role.active';
-  const ACTIVE_ROLE_CATALOGS: readonly Record<string, unknown>[] = [enUS, jaJP, ruRU];
+  const ACTIVE_ROLE_CATALOGS: readonly Record<string, unknown>[] = [enUS, frFR, jaJP, ruRU];
 
   function roleLabel(vfo: VfoViewModel): string {
     const { slot } = vfo;

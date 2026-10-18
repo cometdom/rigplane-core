@@ -4092,7 +4092,7 @@ async def test_command_failure_notification_codes_resolve_in_every_locale() -> N
         / "locales"
     )
     shipped = sorted(path.stem for path in locales.glob("*.json"))
-    assert shipped == ["en-US", "ja-JP", "ru-RU"]
+    assert shipped == ["en-US", "fr-FR", "ja-JP", "ru-RU"]
     for path in sorted(locales.glob("*.json")):
         catalog = json.loads(path.read_text())
         for code in codes:

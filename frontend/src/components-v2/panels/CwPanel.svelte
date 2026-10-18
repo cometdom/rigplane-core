@@ -102,9 +102,19 @@
   // and never a '%' without its number.
   const delayText = (value: number | null): string =>
     value === null ? '' : rawToPercentDisplay(value);
-  const delayLabel = (): string =>
-    getLocale() === 'ru-RU' ? 'Задержка break-in' : 'Break-in Delay';
-  const DELAY_PHASE_COPY: Record<'en' | 'ru', Record<PresentationPhase, string>> = {
+  type DelayCopyLang = 'en' | 'ru' | 'fr';
+  const delayLang = (): DelayCopyLang => {
+    const locale = getLocale();
+    return locale === 'ru-RU' ? 'ru' : locale === 'fr-FR' ? 'fr' : 'en';
+  };
+  const DELAY_WORDS: Record<DelayCopyLang, { label: string; draft: string;
+    lastConfirmed: string; confirmed: string }> = {
+    en: { label: 'Break-in Delay', draft: 'Draft', lastConfirmed: 'last confirmed', confirmed: 'confirmed' },
+    ru: { label: 'Задержка break-in', draft: 'Черновик', lastConfirmed: 'подтверждено', confirmed: 'подтверждено' },
+    fr: { label: 'Délai de break-in', draft: 'Brouillon', lastConfirmed: 'dernière valeur confirmée', confirmed: 'confirmé' },
+  };
+  const delayLabel = (): string => DELAY_WORDS[delayLang()].label;
+  const DELAY_PHASE_COPY: Record<DelayCopyLang, Record<PresentationPhase, string>> = {
     en: { unavailable: 'Control unavailable', idle: 'Confirmed', submitted: 'Requested',
       queued: 'Queued', dispatched: 'Dispatched', 'awaiting-confirmation': 'Awaiting',
       confirmed: 'Radio confirmed', failed: 'Failed', 'timed-out': 'Timed out',
@@ -113,14 +123,18 @@
       queued: 'В очереди', dispatched: 'Отправлено', 'awaiting-confirmation': 'Ожидание',
       confirmed: 'Радио подтвердило', failed: 'Ошибка', 'timed-out': 'Время истекло',
       cancelled: 'Запрос отменён', superseded: 'Запрос заменён' },
+    fr: { unavailable: 'Commande indisponible', idle: 'Confirmé', submitted: 'Demandé',
+      queued: 'En file', dispatched: 'Envoyé', 'awaiting-confirmation': 'En attente',
+      confirmed: 'Confirmé par le poste', failed: 'Échec', 'timed-out': 'Délai dépassé',
+      cancelled: 'Demande annulée', superseded: 'Demande remplacée' },
   };
   function breakInDelayMessage(phase: PresentationPhase, target: number | null,
     confirmed: number | null): string {
-    const ru = getLocale() === 'ru-RU';
-    const label = DELAY_PHASE_COPY[ru ? 'ru' : 'en'][phase], canonical = delayText(confirmed);
+    const lang = delayLang();
+    const label = DELAY_PHASE_COPY[lang][phase], canonical = delayText(confirmed);
     if (phase === 'unavailable') return label;
     if (phase === 'idle' || phase === 'confirmed') return `${label}: ${canonical}`;
-    return `${label} ${delayText(target)}; ${ru ? 'подтверждено' : 'confirmed'} ${canonical}`;
+    return `${label} ${delayText(target)}; ${DELAY_WORDS[lang].confirmed} ${canonical}`;
   }
   let retainedBreakInDelayAnnouncement: string | null = null;
   let breakInDelayAnnouncement = $derived.by(() => {
@@ -138,7 +152,7 @@
     !breakInDelayView.editable
       ? breakInDelayMessage('unavailable', null, null)
       : breakInDelayView.editing
-        ? `${getLocale() === 'ru-RU' ? 'Черновик' : 'Draft'} ${delayText(breakInDelayView.draft)}; ${getLocale() === 'ru-RU' ? 'подтверждено' : 'last confirmed'} ${delayText(breakInDelayView.confirmed)}`
+        ? `${DELAY_WORDS[delayLang()].draft} ${delayText(breakInDelayView.draft)}; ${DELAY_WORDS[delayLang()].lastConfirmed} ${delayText(breakInDelayView.confirmed)}`
         : breakInDelayMessage(
           breakInDelayView.feedback.phase,
           breakInDelayView.feedback.target ?? breakInDelayView.feedback.requestedTarget,
