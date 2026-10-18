@@ -333,7 +333,7 @@ describe('ARS: a fourth shift key only on a radio that declares it', () => {
   it('FTX-1-shaped caps: four keys SIMP / − / + / ARS, and a reported 3 lights ARS alone', () => {
     use(dualState({ mainHz: 14_250_000, subHz: 144_700_000, sub: { ...OFF, shift: 3 } }), dualCaps(FTX1_TAGS));
     renderHosted();
-    expect(shiftKeys().map((node) => node.textContent?.trim())).toEqual(['SIMP', '−', '+', 'ARS']);
+    expect(shiftKeys().map((node) => node.textContent?.trim())).toEqual(['SIMP', 'DUP−', 'DUP+', 'ARS']);
     expect(lit()).toEqual(['ARS']);
     expect(key('repeater-shift-ars')!.getAttribute('data-active')).toBe('true');
   });
@@ -353,7 +353,7 @@ describe('ARS: a fourth shift key only on a radio that declares it', () => {
   it('caps without ARS: three keys, and a reported 3 lights none', () => {
     use(dualState({ mainHz: 14_250_000, subHz: 144_700_000, sub: { ...OFF, shift: 3 } }), dualCaps());
     renderHosted();
-    expect(shiftKeys().map((node) => node.textContent?.trim())).toEqual(['SIMP', '−', '+']);
+    expect(shiftKeys().map((node) => node.textContent?.trim())).toEqual(['SIMP', 'DUP−', 'DUP+']);
     expect(key('repeater-shift-ars')).toBeNull();
     expect(lit()).toEqual([]);
     expect(shiftKeys().every((node) => node.getAttribute('data-active') === 'false')).toBe(true);
@@ -396,7 +396,7 @@ describe('unread facts and pending markers (B4)', () => {
     use(dualState({ mainHz: 14_250_000, subHz: 144_700_000, repeaterRead: false }), dualCaps());
     renderHosted();
     const keys = [...surface()!.querySelectorAll<HTMLButtonElement>('[data-testid^="repeater-tone-"][role="radio"], [data-testid^="repeater-shift-"]')];
-    expect(keys.map((node) => node.textContent?.trim())).toEqual(['OFF', 'TONE', 'TSQL', 'SIMP', '−', '+']);
+    expect(keys.map((node) => node.textContent?.trim())).toEqual(['OFF', 'TONE', 'TSQL', 'SIMP', 'DUP−', 'DUP+']);
     expect(keys.every((node) => node.getAttribute('data-active') === 'false')).toBe(true);
     expect(keys.every((node) => node.getAttribute('aria-checked') === 'false')).toBe(true);
     expect(q('[data-testid="repeater-tone-freq-value"]')!.textContent).toBe('');

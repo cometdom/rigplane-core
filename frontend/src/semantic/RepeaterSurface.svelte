@@ -49,7 +49,7 @@
   let { view, pending = {}, onToneModeChange, onShiftChange, onToneFreqStep }: Props = $props();
 
   const TONE_MODES = [['off', 'OFF'], ['tone', 'TONE'], ['tsql', 'TSQL']] as const;
-  const SHIFTS = [['simplex', 'SIMP'], ['minus', '−'], ['plus', '+'], ['ars', 'ARS']] as const;
+  const SHIFTS = [['simplex', 'SIMP'], ['minus', 'DUP−'], ['plus', 'DUP+'], ['ars', 'ARS']] as const;
 
   let receiver = $derived(repeaterReceiver(view));
   let rx = $derived(receiver === null ? undefined : view?.repeater?.[receiver === 'MAIN' ? 'main' : 'sub']);
