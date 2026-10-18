@@ -101,6 +101,7 @@ _GLOBAL_CONTROL_GETTERS = {
     "monitor_gain": "get_monitor_gain",
     "vox_gain": "get_vox_gain",
     "anti_vox_gain": "get_anti_vox_gain",
+    "ssb_tx_bandwidth": "get_ssb_tx_bandwidth",
 }
 _SCOPE_CONTROL_GETTERS = {
     "receiver": "get_scope_main_sub",
