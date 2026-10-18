@@ -128,3 +128,4 @@
 .radio-layout.desktop-control-face.standard-face.remotemyrig-face .rmr-tx .standard-tx-button-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.remotemyrig-face .rmr-tx .ssb-tx-bw { padding: 2px 8px; }

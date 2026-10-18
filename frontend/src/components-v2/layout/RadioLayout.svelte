@@ -918,6 +918,7 @@
         <div class="rmr-cell">{@render instruments.rxAudio(undefined, rxAudioFiniteLayout)}</div>
         <div class="rmr-cell rmr-tx">
           {@render instruments.rxTx(undefined, undefined, standardTxLayout)}
+          <SsbTxBandwidthControl />
           {@render instruments.txFaultRecovery()}
           {@render instruments.modInputTxWarning()}
         </div>
@@ -935,7 +936,6 @@
         </div>
         {#if remoteMyRigTab !== null}<div class="rmr-tab-panel" role="tabpanel" data-tab={remoteMyRigTab}>
           {#if remoteMyRigTab === 'tx'}
-            <SsbTxBandwidthControl />
             {@render instruments.txAuxControls(txAuxInstrumentLayout)}
             {@render instruments.antenna()}
           {:else if remoteMyRigTab === 'cw'}
