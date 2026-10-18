@@ -1123,7 +1123,15 @@ class TestReceiverDeclaredControlTags:
                     "manual_notch_width",
                 },
             ),
-            ("ic9700", {"attenuator_main", "preamp_main"}),
+            (
+                "ic9700",
+                {
+                    "attenuator_main",
+                    "preamp_main",
+                    "agc_time_constant",
+                    "manual_notch_width",
+                },
+            ),
             ("ic705", {"attenuator_main", "preamp_main", "manual_notch_width"}),
             ("ftx1", {"attenuator_main", "preamp_main"}),
             ("tx500", set()),
@@ -1145,30 +1153,36 @@ class TestReceiverDeclaredControlTags:
         assert projected_receiver_control_tags(radio) == frozenset(expected)
 
     def test_command_declarations_alone_do_not_project_the_agc_time_tags(self):
-        """IC-9700 and IC-705 declare get/set_agc_time_constant without
-        declaring the polled field; admission would light a control that
-        never reads."""
+        """IC-705 declares get/set_agc_time_constant without declaring the
+        polled field; admission would light a control that never reads."""
         from rigplane.rig_loader import load_rig
         from rigplane.runtime.radio import CoreRadio
         from rigplane.web.runtime_helpers import projected_receiver_control_tags
 
-        for rig in ("ic9700", "ic705"):
+        for rig in ("ic705",):
             config = load_rig(_RIGS_DIR / f"{rig}.toml")
             radio = CoreRadio("127.0.0.1", profile=config.to_profile())
             assert radio.profile.supports_command("set_agc_time_constant")
             assert "agc_time_constant" not in projected_receiver_control_tags(radio)
 
     def test_width_values_and_commands_alone_do_not_project_the_notch_width_tag(
-        self,
+        self, tmp_path
     ):
-        """MOR-2726: IC-9700 declares ``set_manual_notch_width`` and
-        ``[notch] width_values`` without declaring the polled field."""
+        """MOR-2726: a profile declaring ``set_manual_notch_width`` and
+        ``[notch] width_values`` without the polled field (IC-9700 with that
+        field removed) does not project the tag."""
         from rigplane.rig_loader import load_rig
         from rigplane.runtime.radio import CoreRadio
         from rigplane.web.runtime_helpers import projected_receiver_control_tags
 
+        field = '    "receiver.main.operator_controls.manual_notch_width",\n'
+        text = (_RIGS_DIR / "ic9700.toml").read_text(encoding="utf-8")
+        assert field in text
+        (tmp_path / "ic9700.toml").write_text(text.replace(field, ""), encoding="utf-8")
+        catalog = "_ctcss_tables_v1.toml"
+        (tmp_path / catalog).write_bytes((_RIGS_DIR / catalog).read_bytes())
         for rig in ("ic9700",):
-            config = load_rig(_RIGS_DIR / f"{rig}.toml")
+            config = load_rig(tmp_path / f"{rig}.toml")
             radio = CoreRadio("127.0.0.1", profile=config.to_profile())
             assert radio.profile.supports_command("set_manual_notch_width")
             assert radio.profile.notch_width_values
