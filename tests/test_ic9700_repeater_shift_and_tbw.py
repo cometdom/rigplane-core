@@ -65,3 +65,10 @@ def test_repeater_shift_and_tbw_are_polled() -> None:
     queries = build_state_queries(resolve_radio_profile(model="IC-9700"))
     assert acquisition_query(0x0F) in queries
     assert acquisition_query(0x16, sub=0x58) in queries
+
+
+def test_mod_input_sources_include_lan() -> None:
+    # IC-9700 CI-V Reference Guide, 1A 05 0115/0116: 05 = LAN.
+    profile = resolve_radio_profile(model="IC-9700")
+    assert profile.data_mode_inputs is not None
+    assert (5, "LAN") in profile.data_mode_inputs

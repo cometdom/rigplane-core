@@ -398,6 +398,7 @@ inputs = [
     { value = 2, name = "MIC+ACC" },
     { value = 3, name = "USB" },
     { value = 4, name = "MIC+USB" },
+    { value = 5, name = "LAN" },
 ]
 
 [filters]

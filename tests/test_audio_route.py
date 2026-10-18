@@ -62,13 +62,20 @@ def test_mk2_lan_route_selects_declared_data1_lan_input() -> None:
 def test_single_data_lan_requires_declared_supported_lan_input() -> None:
     from rigplane.audio.route import resolve_audio_route, rigctld_wsjtx_policy
 
-    for model in ("IC-705", "IC-9700", "IC-7300"):
+    for model in ("IC-705", "IC-7300"):
         radio = SimpleNamespace(
             backend_id="rigplane",
             profile=get_radio_profile(model),
             supports_command=lambda _name: True,
         )
         assert rigctld_wsjtx_policy(resolve_audio_route(radio)) == (None, None)
+    # IC-9700 declares LAN (05) as a DATA MOD source (1A 05 0116).
+    radio = SimpleNamespace(
+        backend_id="rigplane",
+        profile=get_radio_profile("IC-9700"),
+        supports_command=lambda _name: True,
+    )
+    assert rigctld_wsjtx_policy(resolve_audio_route(radio)) == (1, 5)
     radio = SimpleNamespace(
         backend_id="rigplane",
         profile=get_radio_profile("IC-7300MK2"),
