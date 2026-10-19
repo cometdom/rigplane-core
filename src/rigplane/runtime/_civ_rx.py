@@ -1947,11 +1947,16 @@ class CivRuntime:
         (``to_addr == 0x00``) are filtered out so they cannot pollute a
         Hamlib-owned byte stream.
         """
-        listeners = self._host._raw_civ_listeners
-        if not listeners:
-            return
         # CI-V frame layout: FE FE <to_addr> <from_addr> <cmd> ... FD
         if len(frame_bytes) < 5 or frame_bytes[3] != self._host._radio_addr:
+            return
+        for tap in list(getattr(self._host, "_civ_taps", ())):
+            try:
+                tap(bytes(frame_bytes))
+            except Exception:  # noqa: BLE001 — isolate tap failures
+                logger.exception("CI-V tap raised")
+        listeners = self._host._raw_civ_listeners
+        if not listeners:
             return
         if frame_bytes[2] != CONTROLLER_ADDR:  # drops transceive broadcasts (0x00)
             return

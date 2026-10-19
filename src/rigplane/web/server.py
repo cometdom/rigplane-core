@@ -130,6 +130,8 @@ from .memory_bank import (  # noqa: TID251
     default_store_path,
     parse_icom_csv,
 )
+from . import com0com  # noqa: TID251
+from .civ_com_bridge import CivBridgeManager, default_bridge_config_path  # noqa: TID251
 from .rc28 import Rc28Bridge  # noqa: TID251
 from .tx_tone import TxTone  # noqa: TID251
 from .handlers.control import _consume_normalized_level_unit  # noqa: TID251
@@ -1166,6 +1168,9 @@ class WebServer:
         )
         self._rc28 = Rc28Bridge()
         self._tx_tone = TxTone()
+        self._civ_bridges = CivBridgeManager(
+            lambda: self._radio, default_bridge_config_path()
+        )
         self._memory_banks = MemoryBankStore(default_store_path())
         self._request_shutdown: Callable[[], None] | None = None
         self._hardware_scope_available = _supports_scope(radio)
@@ -3646,6 +3651,10 @@ class WebServer:
         self._attach_reconnect_status_listener()
         await start_web_server(self)
         self._rc28.start()
+        try:
+            await self._civ_bridges.apply()
+        except Exception:  # noqa: BLE001 - a bad port must not stop the server
+            logger.exception("civ-bridge: start failed")
         deferred_bridge = self._deferred_bridge_start
         if deferred_bridge is not None:
             # MOR-3078: the CLI armed a deferred auto-start while the
@@ -3835,6 +3844,7 @@ class WebServer:
         self._detach_reconnect_status_listener()
         self._stop_sdr_scope()
         await self._rc28.stop()
+        await self._civ_bridges.stop()
         await stop_web_server(self)
 
     async def serve_forever(
@@ -5616,6 +5626,101 @@ class WebServer:
             await self._send_json(writer, 502, "Bad Gateway", {"error": str(exc)})
             return
         await self._send_json(writer, 200, "OK", {"hz": hz})
+
+    @staticmethod
+    def _is_loopback(writer: asyncio.StreamWriter) -> bool:
+        peer = writer.get_extra_info("peername")
+        return bool(peer) and ipaddress.ip_address(peer[0]).is_loopback
+
+    async def _civ_bridge_payload(self) -> dict[str, Any]:
+        def serial_ports() -> list[dict[str, str]]:
+            try:
+                from serial.tools import list_ports
+            except ImportError:
+                return []
+            return [
+                {"device": p.device, "description": p.description or ""}
+                for p in sorted(list_ports.comports(), key=lambda p: p.device)
+            ]
+
+        return {
+            "bridges": self._civ_bridges.status(),
+            "ports": await asyncio.to_thread(serial_ports),
+            "com0com": com0com.find_setupc() is not None,
+            "pairs": await com0com.list_pairs(),
+        }
+
+    async def _handle_http_civ_bridges(
+        self,
+        method: str,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """GET the CI-V COM bridges, ports and com0com pairs; PUT the bridges."""
+        if method == "PUT":
+            if not self._is_loopback(writer):
+                await self._send_json(writer, 403, "Forbidden", {"error": "local_only"})
+                return
+            if self._config.read_only:
+                await self._send_json(writer, 403, "Forbidden", {"error": "read_only"})
+                return
+            payload = await self._read_json_object(writer, headers, reader)
+            if payload is None:
+                return
+            items = payload.get("bridges")
+            config: list[dict[str, Any]] = []
+            valid = isinstance(items, list)
+            for item in items if isinstance(items, list) else []:
+                port = item.get("port") if isinstance(item, dict) else None
+                if not isinstance(port, str) or not com0com.valid_port(port):
+                    valid = False
+                    break
+                config.append(
+                    {
+                        "port": port,
+                        "enabled": item.get("enabled") is not False,
+                        "allowTx": item.get("allowTx") is True,
+                    }
+                )
+            if not valid or len({c["port"] for c in config}) != len(config):
+                await self._send_json(
+                    writer,
+                    400,
+                    "Bad Request",
+                    {"error": "expected {bridges: [{port: COMn, enabled, allowTx}]}"},
+                )
+                return
+            await self._civ_bridges.apply(config)
+        await self._send_json(writer, 200, "OK", await self._civ_bridge_payload())
+
+    async def _handle_http_com0com_pairs(
+        self,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """POST ``{a, b}``: install a com0com pair (Windows asks for admin rights)."""
+        if not self._is_loopback(writer):
+            await self._send_json(writer, 403, "Forbidden", {"error": "local_only"})
+            return
+        payload = await self._read_json_object(writer, headers, reader)
+        if payload is None:
+            return
+        a, b = payload.get("a"), payload.get("b")
+        try:
+            if not isinstance(a, str) or not isinstance(b, str):
+                raise ValueError("expected {a: COMn, b: COMn}")
+            code = await com0com.create_pair(a, b)
+        except ValueError as exc:
+            await self._send_json(writer, 400, "Bad Request", {"error": str(exc)})
+            return
+        except (FileNotFoundError, OSError) as exc:
+            await self._send_json(writer, 404, "Not Found", {"error": str(exc)})
+            return
+        await self._send_json(
+            writer, 200, "OK", {"code": code, **await self._civ_bridge_payload()}
+        )
 
     async def _handle_http_tx_tone(
         self,

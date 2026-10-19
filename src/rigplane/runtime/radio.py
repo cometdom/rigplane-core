@@ -600,6 +600,7 @@ class CoreRadio(ScopeRuntimeMixin, AudioRuntimeMixin, DualRxRuntimeMixin):
         self._scope_stream_last_span: dict[int, int] = {}
         # Raw CI-V pipe listeners (MOR-164): receive inbound on-wire frame bytes.
         self._raw_civ_listeners: list[Callable[[bytes], Any]] = []
+        self._civ_taps: list[Callable[[bytes], Any]] = []
         # External CAT-session ownership (MOR-166 slice 2): when True, cooperating
         # pollers pause so they do not pollute an external master's byte stream.
         self._external_cat_session: bool = False
@@ -2640,6 +2641,17 @@ class CoreRadio(ScopeRuntimeMixin, AudioRuntimeMixin, DualRxRuntimeMixin):
         """
         self._check_connected()
         await self._send_civ_raw(frame, wait_response=False)
+
+    def add_civ_tap(self, callback: Callable[[bytes], Any]) -> RawCivSubscription:
+        """Register a listener for every inbound frame from this radio.
+
+        Unlike :meth:`add_raw_civ_listener`, no destination filter applies:
+        frames for other controller addresses and transceive broadcasts
+        (``to_addr == 0x00``) are delivered too, so a CI-V port bridge can
+        pick out the replies addressed to its own controller address.
+        """
+        self._civ_taps.append(callback)
+        return RawCivSubscription(self._civ_taps, callback)
 
     def add_raw_civ_listener(
         self, callback: Callable[[bytes], Any]

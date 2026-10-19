@@ -7035,3 +7035,19 @@ async def test_mixed_idle_and_valid_batch_establishes_liveness(
                 assert len(routed) == 1
             finally:
                 await radio._civ_runtime.stop_pump()
+
+
+def test_civ_tap_sees_frames_for_any_controller_address(
+    radio_with_state: IcomRadio,
+) -> None:
+    seen: list[bytes] = []
+    tap = radio_with_state.add_civ_tap(seen.append)
+    addr = radio_with_state._radio_addr
+    other = bytes([0xFE, 0xFE, 0xE1, addr, 0x03, 0xFD])
+    broadcast = bytes([0xFE, 0xFE, 0x00, addr, 0x00, 0xFD])
+    foreign = bytes([0xFE, 0xFE, 0xE1, 0x94, 0x03, 0xFD])
+    for frame in (other, broadcast, foreign):
+        radio_with_state._civ_runtime.deliver_raw_civ(frame)
+    tap.close()
+    radio_with_state._civ_runtime.deliver_raw_civ(other)
+    assert seen == [other, broadcast]

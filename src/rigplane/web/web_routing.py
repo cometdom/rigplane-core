@@ -545,6 +545,20 @@ async def _dispatch_http_routes(
         await server._handle_http_duplex_offset(method, writer, headers, reader)
         return
 
+    if path == "/api/v1/civ-bridges":
+        if method not in ("GET", "PUT"):
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_civ_bridges(method, writer, headers, reader)
+        return
+
+    if path == "/api/v1/com0com/pairs":
+        if method != "POST":
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_com0com_pairs(writer, headers, reader)
+        return
+
     if path == "/api/v1/tx-tone":
         if method != "POST":
             await _send_response(writer, 405, "Method Not Allowed", b"", {})
