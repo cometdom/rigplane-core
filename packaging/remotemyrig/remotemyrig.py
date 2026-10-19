@@ -142,6 +142,16 @@ def set_password(radio: dict[str, Any], password: str) -> None:
     keyring.set_password(APP, _credential_name(radio), password)
 
 
+def unique_names(names: list[str]) -> list[str]:
+    """Names that appear exactly once, in their first order.
+
+    Windows lists one audio device per driver (MME, WASAPI, …) under the same
+    name; rigplane refuses such a name as ambiguous, so only the automatic
+    choice can pick one of those.
+    """
+    return [name for name in dict.fromkeys(names) if names.count(name) == 1]
+
+
 def list_devices() -> dict[str, list[dict[str, str]]]:
     """COM ports and audio devices for the setup page (empty when unavailable)."""
     ports: list[dict[str, str]] = []
@@ -159,16 +169,11 @@ def list_devices() -> dict[str, list[dict[str, str]]]:
     try:
         import sounddevice
 
-        seen_in: set[str] = set()
-        seen_out: set[str] = set()
-        for device in sounddevice.query_devices():
-            name = str(device["name"])
-            if device["max_input_channels"] > 0 and name not in seen_in:
-                seen_in.add(name)
-                inputs.append({"value": name, "label": name})
-            if device["max_output_channels"] > 0 and name not in seen_out:
-                seen_out.add(name)
-                outputs.append({"value": name, "label": name})
+        devices = list(sounddevice.query_devices())
+        ins = [str(d["name"]) for d in devices if d["max_input_channels"] > 0]
+        outs = [str(d["name"]) for d in devices if d["max_output_channels"] > 0]
+        inputs = [{"value": n, "label": n} for n in unique_names(ins)]
+        outputs = [{"value": n, "label": n} for n in unique_names(outs)]
     except Exception:  # noqa: BLE001
         pass
     return {"ports": ports, "inputs": inputs, "outputs": outputs}
@@ -435,6 +440,8 @@ def setup_page(settings: dict[str, Any], radio: dict[str, Any] | None = None) ->
  <label>Vitesse (MENU &gt; SET &gt; Connectors &gt; CI-V &gt; CI-V USB Baud Rate)</label>
  <select id='baud'>{baud_options}</select>
  <label>Carte son — réception</label><select id='rx'></select>
+ <div class='hint'>« Automatique » trouve la carte son USB de la radio ; c'est le bon choix
+ dans presque tous les cas.</div>
  <label>Carte son — émission</label><select id='tx'></select>
 </div>
 <h2>Commun à toutes les radios</h2>

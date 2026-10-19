@@ -138,3 +138,12 @@ def test_footswitch_key_table() -> None:
     assert rmr.FOOTSWITCH_KEYS["Insert"] == 0x2D
     assert rmr.FOOTSWITCH_KEYS["F13"] == 0x7C
     assert rmr.FOOTSWITCH_KEYS["F24"] == 0x87
+
+
+def test_duplicate_audio_names_are_not_offered() -> None:
+    names = [
+        "Microphone (2- USB Audio CODEC )",
+        "Microphone Array",
+        "Microphone (2- USB Audio CODEC )",
+    ]
+    assert rmr.unique_names(names) == ["Microphone Array"]
