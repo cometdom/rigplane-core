@@ -183,9 +183,7 @@ async def _capabilities(bridge: Rc28Bridge) -> list[str]:
 
     from rigplane.web.server import WebConfig, WebServer
 
-    server = WebServer(
-        None, WebConfig(host="127.0.0.1", port=0, radio_model="IC-9700")
-    )
+    server = WebServer(None, WebConfig(host="127.0.0.1", port=0, radio_model="IC-9700"))
     server._rc28 = bridge  # noqa: SLF001
     writer = _HttpWriter()
     await server._handle_http(  # noqa: SLF001
@@ -202,3 +200,67 @@ async def _capabilities(bridge: Rc28Bridge) -> list[str]:
 async def test_capabilities_advertise_rc28_only_with_hidapi() -> None:
     assert "rc28" in await _capabilities(Rc28Bridge(hid_module=object()))
     assert "rc28" not in await _capabilities(Rc28Bridge(hid_module=None))
+
+
+class _PeerWriter(_HttpWriter):
+    def __init__(self, peer: str) -> None:
+        super().__init__()
+        self._peer = peer
+
+    def get_extra_info(self, name: str, default: object = None) -> object:
+        return (self._peer, 50000) if name == "peername" else default
+
+    @property
+    def status(self) -> int:
+        return int(bytes(self.buffer).split(b" ", 2)[1])
+
+
+async def _post_transmit(
+    body: bytes, *, peer: str = "127.0.0.1", read_only: bool = False
+) -> tuple[_PeerWriter, Rc28Bridge, asyncio.Queue[dict[str, object]]]:
+    from rigplane.web.server import WebConfig, WebServer
+
+    server = WebServer(
+        None,
+        WebConfig(host="127.0.0.1", port=0, radio_model="IC-9700", read_only=read_only),
+    )
+    bridge = Rc28Bridge(hid_module=None)
+    server._rc28 = bridge  # noqa: SLF001
+    queue = bridge.subscribe()
+    reader = asyncio.StreamReader()
+    reader.feed_data(body)
+    reader.feed_eof()
+    writer = _PeerWriter(peer)
+    await server._handle_http(  # noqa: SLF001
+        writer,  # type: ignore[arg-type]
+        "POST",
+        "/api/v1/rc28/transmit",
+        headers={"content-length": str(len(body))},
+        reader=reader,
+    )
+    return writer, bridge, queue
+
+
+async def test_local_transmit_input_reaches_rc28_clients() -> None:
+    writer, _, queue = await _post_transmit(b'{"pressed": true}')
+    assert writer.status == 200
+    message = await asyncio.wait_for(queue.get(), 1)
+    assert message == {"type": "key", "key": "transmit", "pressed": True}
+
+
+@pytest.mark.parametrize(
+    ("body", "peer", "read_only", "status"),
+    [
+        (b'{"pressed": true}', "192.168.1.50", False, 403),
+        (b'{"pressed": true}', "127.0.0.1", True, 403),
+        (b'{"pressed": "yes"}', "127.0.0.1", False, 400),
+        (b'{"pressed": true, "x": 1}', "127.0.0.1", False, 400),
+    ],
+)
+async def test_transmit_input_refusals(
+    body: bytes, peer: str, read_only: bool, status: int
+) -> None:
+    writer, _, queue = await _post_transmit(body, peer=peer, read_only=read_only)
+    assert writer.status == status
+    await asyncio.sleep(0)
+    assert queue.empty()

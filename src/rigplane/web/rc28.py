@@ -164,6 +164,10 @@ class Rc28Bridge:
                 self._leds = report
                 self._leds_dirty = True
 
+    def press_transmit(self, pressed: bool) -> None:
+        """Inject a TRANSMIT key edge from another local input (foot switch)."""
+        self._publish(_event_message(Rc28Key("transmit", pressed=pressed)))
+
     def start(self) -> None:
         if self._hid is None or self._thread is not None:
             return

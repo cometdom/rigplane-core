@@ -5500,6 +5500,36 @@ class WebServer:
             },
         )
 
+    async def _handle_http_rc28_transmit(
+        self,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """POST a TRANSMIT key edge from a local input (e.g. a foot switch).
+
+        Loopback only: the edge reaches the browser's RC-28 TRANSMIT path,
+        which keys through the same gate as the on-screen PTT.
+        """
+        peer = writer.get_extra_info("peername")
+        if not peer or not ipaddress.ip_address(peer[0]).is_loopback:
+            await self._send_json(writer, 403, "Forbidden", {"error": "local_only"})
+            return
+        if self._config.read_only:
+            await self._send_json(writer, 403, "Forbidden", {"error": "read_only"})
+            return
+        payload = await self._read_json_object(writer, headers, reader)
+        if payload is None:
+            return
+        pressed = payload.get("pressed")
+        if set(payload) != {"pressed"} or type(pressed) is not bool:
+            await self._send_json(
+                writer, 400, "Bad Request", {"error": "expected {pressed: bool}"}
+            )
+            return
+        self._rc28.press_transmit(pressed)
+        await self._send_json(writer, 200, "OK", {"pressed": pressed})
+
     async def _handle_http_menu_toggles(
         self,
         method: str,
