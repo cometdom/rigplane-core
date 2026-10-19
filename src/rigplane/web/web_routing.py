@@ -524,6 +524,13 @@ async def _dispatch_http_routes(
         await server._handle_http_managed_tx(path, writer, headers, reader)
         return
 
+    if path == "/api/v1/app/shutdown":
+        if method != "POST":
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_app_shutdown(writer)
+        return
+
     if path == "/api/v1/rc28/transmit":
         if method != "POST":
             await _send_response(writer, 405, "Method Not Allowed", b"", {})

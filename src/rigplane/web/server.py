@@ -873,6 +873,9 @@ class WebConfig:
     discovery: bool = True  # enable UDP discovery responder
     discovery_port: int = 8470  # UDP port for discovery
     read_only: bool = False  # reject PTT and other transmit commands
+    # POST /api/v1/app/shutdown from loopback stops the server (RemoteMyRig
+    # window close). Off unless the launcher sets RIGPLANE_APP_SHUTDOWN=1.
+    app_shutdown: bool = False
     emit_startup_event: bool = False  # emit JSON runtime startup event to stdout
     # Hold the listener closed (see web_startup._await_initial_state_acquisition).
     # The CLI sets it; embedders and tests that drive start() without a
@@ -1156,6 +1159,7 @@ class WebServer:
             adaptive_egress=self._config.audio_adaptive_egress,
         )
         self._rc28 = Rc28Bridge()
+        self._request_shutdown: Callable[[], None] | None = None
         self._hardware_scope_available = _supports_scope(radio)
         # Gated WebRTC transport session manager (A2.3 / MOR-307). Lazily
         # constructed on first use so the import stays out of the no-extra path.
@@ -3874,10 +3878,12 @@ class WebServer:
                 os._exit(1)
 
         _install_shutdown_signal_handlers(loop, _on_signal)
+        self._request_shutdown = _on_signal
 
         try:
             await stop_event.wait()
         finally:
+            self._request_shutdown = None
             # Shield stop() from CancelledError so server.close() always runs
             try:
                 await asyncio.shield(self.stop())
@@ -5499,6 +5505,22 @@ class WebServer:
                 "message": "Managed transmit authority unavailable",
             },
         )
+
+    async def _handle_http_app_shutdown(self, writer: asyncio.StreamWriter) -> None:
+        """POST: stop the server as Ctrl+C would (loopback, opt-in only)."""
+        peer = writer.get_extra_info("peername")
+        local = bool(peer) and ipaddress.ip_address(peer[0]).is_loopback
+        request = self._request_shutdown
+        if not self._config.app_shutdown or not local:
+            await self._send_json(writer, 403, "Forbidden", {"error": "forbidden"})
+            return
+        if request is None:
+            await self._send_json(
+                writer, 503, "Service Unavailable", {"error": "not_serving"}
+            )
+            return
+        await self._send_json(writer, 202, "Accepted", {"stopping": True})
+        asyncio.get_running_loop().call_soon(request)
 
     async def _handle_http_rc28_transmit(
         self,

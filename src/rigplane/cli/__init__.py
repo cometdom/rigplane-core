@@ -4543,6 +4543,8 @@ async def _cmd_web(
     if isinstance(_radio_model, str) and _radio_model:
         config_kwargs["radio_model"] = _radio_model
     config_kwargs["await_initial_state"] = True
+    if os.environ.get("RIGPLANE_APP_SHUTDOWN", "") == "1":
+        config_kwargs["app_shutdown"] = True
     config = WebConfig(**config_kwargs)
     _print_serial_identity_no_response(radio)
     server = WebServer(radio, config)
