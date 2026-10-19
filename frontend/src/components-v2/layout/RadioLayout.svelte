@@ -45,6 +45,7 @@
   import KeyboardHandler from './KeyboardHandler.svelte';
   import SsbTxBandwidthControl from '../wiring/SsbTxBandwidthControl.svelte';
   import OverflowIndicator from '../wiring/OverflowIndicator.svelte';
+  import ToneBurstButton from '../wiring/ToneBurstButton.svelte';
   import MemoryBankPanel from '../wiring/MemoryBankPanel.svelte';
   import type { BandInstrumentHandles } from '../../semantic/band-instruments';
   import StatusBar from './StatusBar.svelte';
@@ -923,7 +924,7 @@
         <div class="rmr-cell">{@render instruments.rxAudio(undefined, rxAudioFiniteLayout)}</div>
         <div class="rmr-cell rmr-tx">
           {@render instruments.rxTx(undefined, undefined, standardTxLayout)}
-          <SsbTxBandwidthControl />
+          <div class="rmr-tx-extras"><SsbTxBandwidthControl /><ToneBurstButton /></div>
           {@render instruments.txFaultRecovery()}
           {@render instruments.modInputTxWarning()}
         </div>
