@@ -16,6 +16,7 @@ from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Protocol, cast
 
+from ..tx_tone import TxTone  # noqa: TID251
 from rigplane.audio._codecs import decode_ulaw_to_pcm16
 from rigplane.audio._transcoder import PcmOpusTranscoder, create_pcm_opus_transcoder
 from ...audio import route as audio_route
@@ -1533,9 +1534,11 @@ class AudioHandler:
         controller_track_stop: Callable[[Awaitable[None]], Awaitable[None]]
         | None = None,
         managed_tx_authority: ManagedTxAuthority | None = None,
+        tx_tone: TxTone | None = None,
     ) -> None:
         self._ws = ws
         self._radio = radio
+        self._tx_tone = tx_tone
         self._broadcaster = broadcaster
         self._tx_gate = tx_gate
         self._controller = controller
@@ -2167,6 +2170,12 @@ class AudioHandler:
         """Push TX bytes via the held session lease (MOR-580); without one,
         via neutral ``push_tx``, falling back to the named legacy per-codec
         push method (MOR-544)."""
+        tone = self._tx_tone
+        if tone is not None and legacy_method == "push_audio_tx_pcm":
+            # A requested tone burst replaces the microphone PCM frame.
+            burst = tone.render(len(data), self._tx_sample_rate())
+            if burst is not None:
+                data = burst
         ticket = self._controller_ticket
         remote = ticket is not None and ticket.remote
 

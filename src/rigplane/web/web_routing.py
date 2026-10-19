@@ -545,6 +545,13 @@ async def _dispatch_http_routes(
         await server._handle_http_duplex_offset(method, writer, headers, reader)
         return
 
+    if path == "/api/v1/tx-tone":
+        if method != "POST":
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_tx_tone(writer, headers, reader)
+        return
+
     if path == "/api/v1/app/shutdown":
         if method != "POST":
             await _send_response(writer, 405, "Method Not Allowed", b"", {})

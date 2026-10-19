@@ -131,6 +131,7 @@ from .memory_bank import (  # noqa: TID251
     parse_icom_csv,
 )
 from .rc28 import Rc28Bridge  # noqa: TID251
+from .tx_tone import TxTone  # noqa: TID251
 from .handlers.control import _consume_normalized_level_unit  # noqa: TID251
 from .host_guard import (  # noqa: TID251
     MISDIRECTED_BODY,
@@ -1164,6 +1165,7 @@ class WebServer:
             adaptive_egress=self._config.audio_adaptive_egress,
         )
         self._rc28 = Rc28Bridge()
+        self._tx_tone = TxTone()
         self._memory_banks = MemoryBankStore(default_store_path())
         self._request_shutdown: Callable[[], None] | None = None
         self._hardware_scope_available = _supports_scope(radio)
@@ -5615,6 +5617,37 @@ class WebServer:
             return
         await self._send_json(writer, 200, "OK", {"hz": hz})
 
+    async def _handle_http_tx_tone(
+        self,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """POST ``{hz, ms}``: replace the browser TX audio by a tone burst.
+
+        It keys nothing: the tone only reaches the radio while browser TX
+        audio is already flowing (a transmit keyed through the PTT gate).
+        """
+        if self._config.read_only:
+            await self._send_json(writer, 403, "Forbidden", {"error": "read_only"})
+            return
+        payload = await self._read_json_object(writer, headers, reader)
+        if payload is None:
+            return
+        hz, ms = payload.get("hz"), payload.get("ms")
+        try:
+            if (
+                set(payload) != {"hz", "ms"}
+                or type(hz) is not int
+                or type(ms) is not int
+            ):
+                raise ValueError("expected {hz: int, ms: int}")
+            self._tx_tone.start(hz, ms / 1000)
+        except ValueError as exc:
+            await self._send_json(writer, 400, "Bad Request", {"error": str(exc)})
+            return
+        await self._send_json(writer, 200, "OK", {"hz": hz, "ms": ms})
+
     async def _handle_http_app_shutdown(self, writer: asyncio.StreamWriter) -> None:
         """POST: stop the server as Ctrl+C would (loopback, opt-in only)."""
         peer = writer.get_extra_info("peername")
@@ -7888,6 +7921,7 @@ class WebServer:
                 controller_audio_loss=self._controller_audio_loss,
                 controller_track_stop=self._controller_track_audio_stop,
                 managed_tx_authority=self._managed_tx_authority(),
+                tx_tone=self._tx_tone,
             )
         else:
             self._controller.detach(ticket)
