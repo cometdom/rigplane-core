@@ -1198,6 +1198,7 @@ describe("the SDR face's centre-top pair is zone-owned (MOR-2231, batch 4)", () 
   const BEFORE_HOSTS = [
     '.left-sidebar band',
     '.right-sidebar memory',
+    '.settings-modal desktop-civ-bridges',
     '.settings-modal desktop-language',
     '.settings-modal desktop-radio-menu',
     '.settings-modal desktop-vfo-ops',
@@ -1816,7 +1817,8 @@ describe('the legacy-twin suppression channel (MOR-1364, S6-pre)', () => {
       .sort();
     expect(ids).toEqual([
       'band',
-      'desktop-language', 'desktop-radio-menu', 'desktop-vfo-ops', 'desktop-workspace',
+      'desktop-civ-bridges', 'desktop-language', 'desktop-radio-menu', 'desktop-vfo-ops',
+      'desktop-workspace',
     ]);
   });
 
@@ -1848,6 +1850,8 @@ describe('the legacy-twin suppression channel (MOR-1364, S6-pre)', () => {
     'desktop-workspace': 'S10 row 9 — PERMANENT. Workspace preferences are not a radio fact.',
     'desktop-radio-menu': 'Personal fork — persistent radio-menu toggles (IC-9700 External P.AMP '
       + 'per band), read when the settings open. No semantic surface covers menu settings.',
+    'desktop-civ-bridges': 'Personal fork — CI-V over virtual COM ports (com0com pairs and the '
+      + 'ports rigplane opens). Host configuration, not a radio fact.',
     // Not in the inventory above under the default fixture, but reachable and
     // decided, so recorded here rather than discovered later:
     tx: 'R9 — the ONE key/unkey authority. It follows the semantic DECK via `hideTxPanel` '

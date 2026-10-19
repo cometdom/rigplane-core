@@ -373,5 +373,18 @@
   "core.memoryBank.imported": "{count} チャンネルを読み込みました",
   "core.memoryBank.transmitting": "送信中は使用できません",
   "core.memoryBank.colName": "名前",
-  "core.memoryBank.colTone": "トーン"
+  "core.memoryBank.colTone": "トーン",
+  "core.civBridge.intro": "ソフト（ログソフト、OmniRigなど）は仮想ペアの片方を無線機のように開き、rigplaneがもう片方を開きます。",
+  "core.civBridge.noCom0com": "com0comがインストールされていません。",
+  "core.civBridge.pairs": "com0comペア",
+  "core.civBridge.useFor": "rigplaneが{port}を使用",
+  "core.civBridge.programUses": "ソフトは{port}を使用",
+  "core.civBridge.createPair": "ペアを作成",
+  "core.civBridge.createHint": "Windowsが管理者権限を求めます。",
+  "core.civBridge.bridges": "rigplaneが開くポート",
+  "core.civBridge.enabled": "有効",
+  "core.civBridge.allowTx": "送信を許可",
+  "core.civBridge.remove": "削除",
+  "core.civBridge.add": "追加",
+  "core.civBridge.none": "ポートはまだありません。"
 }

@@ -373,5 +373,18 @@
   "core.memoryBank.imported": "{count} channels imported",
   "core.memoryBank.transmitting": "Not while transmitting",
   "core.memoryBank.colName": "Name",
-  "core.memoryBank.colTone": "Tone"
+  "core.memoryBank.colTone": "Tone",
+  "core.civBridge.intro": "A program (logger, OmniRig…) opens one port of a virtual pair as if the radio were there; rigplane opens the other.",
+  "core.civBridge.noCom0com": "com0com is not installed.",
+  "core.civBridge.pairs": "com0com pairs",
+  "core.civBridge.useFor": "rigplane uses {port}",
+  "core.civBridge.programUses": "the program uses {port}",
+  "core.civBridge.createPair": "Create pair",
+  "core.civBridge.createHint": "Windows will ask for administrator rights.",
+  "core.civBridge.bridges": "Ports opened by rigplane",
+  "core.civBridge.enabled": "On",
+  "core.civBridge.allowTx": "Allow TX",
+  "core.civBridge.remove": "Remove",
+  "core.civBridge.add": "Add",
+  "core.civBridge.none": "No port yet."
 }

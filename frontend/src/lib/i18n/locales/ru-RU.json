@@ -372,5 +372,18 @@
   "core.memoryBank.imported": "Импортировано каналов: {count}",
   "core.memoryBank.transmitting": "Недоступно во время передачи",
   "core.memoryBank.colName": "Имя",
-  "core.memoryBank.colTone": "Тон"
+  "core.memoryBank.colTone": "Тон",
+  "core.civBridge.intro": "Программа (журнал, OmniRig…) открывает один порт виртуальной пары как радиостанцию; rigplane открывает другой.",
+  "core.civBridge.noCom0com": "com0com не установлен.",
+  "core.civBridge.pairs": "Пары com0com",
+  "core.civBridge.useFor": "rigplane использует {port}",
+  "core.civBridge.programUses": "программа использует {port}",
+  "core.civBridge.createPair": "Создать пару",
+  "core.civBridge.createHint": "Windows запросит права администратора.",
+  "core.civBridge.bridges": "Порты, открытые rigplane",
+  "core.civBridge.enabled": "Вкл.",
+  "core.civBridge.allowTx": "Разрешить передачу",
+  "core.civBridge.remove": "Удалить",
+  "core.civBridge.add": "Добавить",
+  "core.civBridge.none": "Портов пока нет."
 }

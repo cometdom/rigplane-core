@@ -373,5 +373,18 @@
   "core.memoryBank.imported": "{count} canaux importés",
   "core.memoryBank.transmitting": "Impossible pendant l'émission",
   "core.memoryBank.colName": "Nom",
-  "core.memoryBank.colTone": "Ton"
+  "core.memoryBank.colTone": "Ton",
+  "core.civBridge.intro": "Un logiciel (carnet de trafic, OmniRig…) ouvre un port d'une paire virtuelle comme si la radio y était branchée ; rigplane ouvre l'autre.",
+  "core.civBridge.noCom0com": "com0com n'est pas installé.",
+  "core.civBridge.pairs": "Paires com0com",
+  "core.civBridge.useFor": "rigplane utilise {port}",
+  "core.civBridge.programUses": "le logiciel utilise {port}",
+  "core.civBridge.createPair": "Créer la paire",
+  "core.civBridge.createHint": "Windows demandera les droits administrateur.",
+  "core.civBridge.bridges": "Ports ouverts par rigplane",
+  "core.civBridge.enabled": "Actif",
+  "core.civBridge.allowTx": "Autoriser l'émission",
+  "core.civBridge.remove": "Retirer",
+  "core.civBridge.add": "Ajouter",
+  "core.civBridge.none": "Aucun port pour l'instant."
 }

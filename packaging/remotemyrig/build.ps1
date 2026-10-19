@@ -41,6 +41,8 @@ Copy-Item (Join-Path $here "remotemyrig.py") (Join-Path $work "RemoteMyRig.py") 
     --collect-all _sounddevice_data `
     --collect-submodules keyring `
     --hidden-import hid `
+    --hidden-import serial_asyncio `
+    --collect-submodules serial `
     (Join-Path $work "RemoteMyRig.py")
 
 Write-Host ""

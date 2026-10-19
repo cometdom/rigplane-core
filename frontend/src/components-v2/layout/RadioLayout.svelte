@@ -68,6 +68,7 @@
   import LanguageSelector from '../controls/LanguageSelector.svelte';
   import WorkspaceSettingsPanel from '../controls/WorkspaceSettingsPanel.svelte';
   import RadioMenuTogglesPanel from '../controls/RadioMenuTogglesPanel.svelte';
+  import CivBridgesPanel from '../controls/CivBridgesPanel.svelte';
   import WorkspaceImportExport from '../controls/WorkspaceImportExport.svelte';
   import DspPanel from '../panels/DspPanel.svelte';
   import AgcPanel from '../panels/AgcPanel.svelte';
@@ -1045,6 +1046,10 @@
 
         <CollapsiblePanel title="RADIO MENU" panelId="desktop-radio-menu">
           <RadioMenuTogglesPanel />
+        </CollapsiblePanel>
+
+        <CollapsiblePanel title="CI-V COM" panelId="desktop-civ-bridges">
+          <CivBridgesPanel />
         </CollapsiblePanel>
 
         <CollapsiblePanel title="VFO / BAND" panelId="desktop-vfo-ops">
