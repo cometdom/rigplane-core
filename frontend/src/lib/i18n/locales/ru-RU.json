@@ -363,5 +363,14 @@
   "core.remotemyrig.tab.cw": "CW",
   "core.remotemyrig.tab.ritXitScan": "RIT / XIT / СКАН",
   "core.remotemyrig.tab.memory": "ПАМЯТЬ",
-  "core.remotemyrig.tab.repeater": "РЕПИТЕР"
+  "core.remotemyrig.tab.repeater": "РЕПИТЕР",
+  "core.memoryBank.bank": "Банк",
+  "core.memoryBank.import": "Импорт CSV",
+  "core.memoryBank.delete": "Удалить банк",
+  "core.memoryBank.deleteConfirm": "Удалить банк «{name}»?",
+  "core.memoryBank.empty": "Нет банков: импортируйте CSV памяти, экспортированный программой Icom (CS-9700).",
+  "core.memoryBank.imported": "Импортировано каналов: {count}",
+  "core.memoryBank.transmitting": "Недоступно во время передачи",
+  "core.memoryBank.colName": "Имя",
+  "core.memoryBank.colTone": "Тон"
 }

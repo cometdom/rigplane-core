@@ -364,5 +364,14 @@
   "core.remotemyrig.tab.cw": "CW",
   "core.remotemyrig.tab.ritXitScan": "RIT / XIT / スキャン",
   "core.remotemyrig.tab.memory": "メモリー",
-  "core.remotemyrig.tab.repeater": "レピーター"
+  "core.remotemyrig.tab.repeater": "レピーター",
+  "core.memoryBank.bank": "バンク",
+  "core.memoryBank.import": "CSVを読み込む",
+  "core.memoryBank.delete": "バンクを削除",
+  "core.memoryBank.deleteConfirm": "バンク「{name}」を削除しますか？",
+  "core.memoryBank.empty": "バンクがありません。Icomソフト（CS-9700）で書き出したメモリーCSVを読み込んでください。",
+  "core.memoryBank.imported": "{count} チャンネルを読み込みました",
+  "core.memoryBank.transmitting": "送信中は使用できません",
+  "core.memoryBank.colName": "名前",
+  "core.memoryBank.colTone": "トーン"
 }

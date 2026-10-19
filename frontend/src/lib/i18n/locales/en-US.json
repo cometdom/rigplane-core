@@ -364,5 +364,14 @@
   "core.remotemyrig.tab.cw": "CW",
   "core.remotemyrig.tab.ritXitScan": "RIT / XIT / SCAN",
   "core.remotemyrig.tab.memory": "MEMORY",
-  "core.remotemyrig.tab.repeater": "REPEATER"
+  "core.remotemyrig.tab.repeater": "REPEATER",
+  "core.memoryBank.bank": "Bank",
+  "core.memoryBank.import": "Import CSV",
+  "core.memoryBank.delete": "Delete bank",
+  "core.memoryBank.deleteConfirm": "Delete the bank \"{name}\"?",
+  "core.memoryBank.empty": "No bank yet: import a memory CSV exported by Icom software (CS-9700).",
+  "core.memoryBank.imported": "{count} channels imported",
+  "core.memoryBank.transmitting": "Not while transmitting",
+  "core.memoryBank.colName": "Name",
+  "core.memoryBank.colTone": "Tone"
 }

@@ -45,6 +45,7 @@
   import KeyboardHandler from './KeyboardHandler.svelte';
   import SsbTxBandwidthControl from '../wiring/SsbTxBandwidthControl.svelte';
   import OverflowIndicator from '../wiring/OverflowIndicator.svelte';
+  import MemoryBankPanel from '../wiring/MemoryBankPanel.svelte';
   import type { BandInstrumentHandles } from '../../semantic/band-instruments';
   import StatusBar from './StatusBar.svelte';
   import MetersDockPanel from '../panels/MetersDockPanel.svelte';
@@ -947,6 +948,7 @@
           {:else if remoteMyRigTab === 'ritXitScan'}
             {@render instruments.ritXitScan()}
           {:else if remoteMyRigTab === 'memory'}
+            <MemoryBankPanel />
             {@render instruments.memory()}
           {:else}
             {@render instruments.repeater?.()}
