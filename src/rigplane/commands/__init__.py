@@ -176,6 +176,9 @@ from .ptt import ptt_off, ptt_on
 
 # --- vfo.py ---
 from .vfo import (
+    decode_duplex_offset,
+    encode_duplex_offset,
+    get_duplex_offset,
     get_dual_watch,
     get_main_sub_band,
     get_quick_dual_watch,
@@ -192,6 +195,7 @@ from .vfo import (
     scan_stop,
     VALID_DF_SPANS,
     select_vfo,
+    set_duplex_offset,
     set_dual_watch,
     set_dual_watch_off,
     set_dual_watch_on,
@@ -751,6 +755,10 @@ __all__ = [
     "get_repeater_shift",
     "set_repeater_shift",
     "parse_repeater_shift_response",
+    "get_duplex_offset",
+    "set_duplex_offset",
+    "encode_duplex_offset",
+    "decode_duplex_offset",
     # Memory
     "build_memory_clear",
     "build_memory_contents_get",

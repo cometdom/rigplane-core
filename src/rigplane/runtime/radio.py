@@ -163,6 +163,7 @@ from rigplane.commands import (
     parse_frequency_response,
     parse_level_response,
     parse_meter_response,
+    decode_duplex_offset,
     parse_repeater_shift_response,
     parse_rit_frequency_response,
     parse_system_date_response,
@@ -4853,6 +4854,21 @@ class CoreRadio(ScopeRuntimeMixin, AudioRuntimeMixin, DualRxRuntimeMixin):
         resp = await self._send_civ_expect(civ, label="set_repeater_shift")
         if parse_ack_nak(resp) is False:
             raise CommandError(f"Radio rejected repeater shift {direction!r}")
+
+    async def get_duplex_offset(self) -> int:
+        """Read the duplex (repeater) offset in Hz (IC-9700 CI-V ``0x0C``)."""
+        self._check_connected()
+        civ = self._commands.get_duplex_offset(to_addr=self._radio_addr)
+        resp = await self._send_civ_expect(civ, label="get_duplex_offset")
+        return decode_duplex_offset(resp.data)
+
+    async def set_duplex_offset(self, offset_hz: int) -> None:
+        """Set the duplex (repeater) offset in Hz (IC-9700 CI-V ``0x0D``)."""
+        self._check_connected()
+        civ = self._commands.set_duplex_offset(offset_hz, to_addr=self._radio_addr)
+        resp = await self._send_civ_expect(civ, label="set_duplex_offset")
+        if parse_ack_nak(resp) is False:
+            raise CommandError(f"Radio rejected duplex offset {offset_hz} Hz")
 
     async def get_tuning_step(self) -> int:
         """Read the tuning step index (0-8, BCD-encoded per IC-7610, CI-V 0x10)."""

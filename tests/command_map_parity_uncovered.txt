@@ -31,10 +31,10 @@ census	cat_only_profiles	1
 census	dual_implementation_sites	0
 census	frames_diverged	0
 census	frames_identical	0
-census	hardcode_only_builders	0
+census	hardcode_only_builders	2
 census	profile_builder_map_gaps	0
 census	profiles	9
-census	public_builders	243
+census	public_builders	245
 census	sites_compared	0
 cat-only	FTX-1	128
 requires-map	antenna.py:get_antenna_1
@@ -259,6 +259,7 @@ requires-map	tone.py:set_tsql_freq
 requires-map	tx_band.py:get_tx_band_count
 requires-map	tx_band.py:get_tx_band_edge
 requires-map	vfo.py:get_dual_watch
+requires-map	vfo.py:get_duplex_offset
 requires-map	vfo.py:get_main_sub_band
 requires-map	vfo.py:get_quick_dual_watch
 requires-map	vfo.py:get_quick_split
@@ -274,6 +275,7 @@ requires-map	vfo.py:scan_stop
 requires-map	vfo.py:set_dual_watch
 requires-map	vfo.py:set_dual_watch_off
 requires-map	vfo.py:set_dual_watch_on
+requires-map	vfo.py:set_duplex_offset
 requires-map	vfo.py:set_quick_dual_watch
 requires-map	vfo.py:set_quick_split
 requires-map	vfo.py:set_repeater_shift

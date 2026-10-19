@@ -219,6 +219,55 @@ def parse_repeater_shift_response(data: bytes) -> RepeaterShiftDirection | None:
     return _REPEATER_SHIFT_READBACK.get(data[0])
 
 
+def encode_duplex_offset(offset_hz: int) -> bytes:
+    """Duplex offset wire bytes (IC-9700 0C/0D): six BCD digits in 100 Hz
+    units, as (1 kHz, 100 Hz), (100 kHz, 10 kHz), (10 MHz, 1 MHz)."""
+    if not 0 <= offset_hz < 100_000_000 or offset_hz % 100:
+        raise ValueError(f"duplex offset out of range: {offset_hz} Hz")
+    d = f"{offset_hz // 100:06d}"
+    return bytes(int(d[i]) << 4 | int(d[i + 1]) for i in (4, 2, 0))
+
+
+def decode_duplex_offset(data: bytes) -> int:
+    """Inverse of :func:`encode_duplex_offset`."""
+    if len(data) < 3:
+        raise ValueError(f"duplex offset reply too short: {data.hex()}")
+    units = 0
+    for byte in reversed(data[:3]):
+        units = units * 100 + (byte >> 4) * 10 + (byte & 0x0F)
+    return units * 100
+
+
+@expose_command_key(lambda cmd_map: "get_duplex_offset")
+@require_cmd_map
+def get_duplex_offset(
+    to_addr: int, from_addr: int = CONTROLLER_ADDR, *, cmd_map: CommandMap
+) -> bytes:
+    """Build CI-V command to read the duplex offset."""
+    return _build_from_map(
+        cmd_map, "get_duplex_offset", to_addr=to_addr, from_addr=from_addr
+    )
+
+
+@expose_command_key(lambda cmd_map: "set_duplex_offset")
+@require_cmd_map
+def set_duplex_offset(
+    offset_hz: int,
+    to_addr: int,
+    from_addr: int = CONTROLLER_ADDR,
+    *,
+    cmd_map: CommandMap,
+) -> bytes:
+    """Build CI-V command to set the duplex offset."""
+    return _build_from_map(
+        cmd_map,
+        "set_duplex_offset",
+        to_addr=to_addr,
+        from_addr=from_addr,
+        data=encode_duplex_offset(offset_hz),
+    )
+
+
 @expose_command_key(lambda cmd_map: "get_tuning_step")
 @require_cmd_map
 def get_tuning_step(
