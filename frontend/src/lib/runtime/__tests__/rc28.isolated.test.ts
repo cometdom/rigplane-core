@@ -4,7 +4,7 @@ const dispatch = vi.fn();
 vi.mock('../commands/panel-commands', () => ({ makeKeyboardHandlers: () => ({ dispatch }) }));
 vi.mock('$lib/stores/tuning.svelte', () => ({ getTuningStep: () => 1000 }));
 
-const { createRc28Tuner, getRc28Settings, runRc28Function, RC28_DEFAULT_SETTINGS } = await import('../rc28');
+const { createRc28Tuner, getRc28Settings, rc28TransmitAction, runRc28Function, RC28_DEFAULT_SETTINGS } = await import('../rc28');
 
 describe('RC-28 wheel', () => {
   beforeEach(() => { dispatch.mockReset(); vi.useFakeTimers(); });
@@ -56,5 +56,27 @@ describe('RC-28 keys and settings', () => {
   it('reads stored settings and rejects invalid values', () => {
     localStorage.setItem('rigplane.rc28', JSON.stringify({ transmitMode: 'hold', f1: 'bogus', ticksPerStep: 99 }));
     expect(getRc28Settings()).toEqual({ ...RC28_DEFAULT_SETTINGS, transmitMode: 'hold' });
+  });
+});
+
+describe('RC-28 TRANSMIT', () => {
+  const idle = { fresh: true, phase: 'idle', intent: null } as const;
+  const latched = { fresh: true, phase: 'active', intent: 'latched' } as const;
+
+  it('toggle: keys from idle, releases its own latched transmit, ignores release edges', () => {
+    expect(rc28TransmitAction(true, 'toggle', idle, false)).toBe('key');
+    expect(rc28TransmitAction(true, 'toggle', latched, false)).toBe('unkey');
+    expect(rc28TransmitAction(false, 'toggle', latched, false)).toBe('none');
+  });
+
+  it('keys only on a fresh idle snapshot, like the on-screen PTT', () => {
+    expect(rc28TransmitAction(true, 'toggle', { ...idle, fresh: false }, false)).toBe('none');
+    expect(rc28TransmitAction(true, 'toggle', { fresh: true, phase: 'releasing', intent: null }, false)).toBe('none');
+  });
+
+  it('hold and remote modes key while pressed and always release', () => {
+    expect(rc28TransmitAction(true, 'hold', idle, false)).toBe('ptt-on');
+    expect(rc28TransmitAction(false, 'hold', latched, false)).toBe('ptt-off');
+    expect(rc28TransmitAction(true, 'toggle', idle, true)).toBe('ptt-on');
   });
 });

@@ -144,6 +144,7 @@
   } from '../../semantic/vfo-operation-projection';
   import { keyBlockedReasons } from '../../semantic/rx-tx-surface';
   import Rc28Wiring from './Rc28Wiring.svelte';
+  import { rc28TransmitAction, type Rc28TransmitMode } from '$lib/runtime/rc28';
   import VfoSurface, { type VfoSelection } from '../../semantic/VfoSurface.svelte';
   import SemanticControlPanel from '../layout/SemanticControlPanel.svelte';
   import ModInputTxWarning from '../panels/ModInputTxWarning.svelte';
@@ -1836,26 +1837,13 @@
     tx.forceOff();
   }
 
-  /**
-   * RC-28 TRANSMIT. Keying passes the same `keyBlockedReasons` gate that
-   * disables the on-screen PTT; a toggle press on the operator's own latched
-   * transmit releases it, as the on-screen PTT does. Hold mode (and a remote
-   * controller, which can only key momentarily) keys while the key is down.
-   */
-  function rc28Transmit(pressed: boolean, mode: 'toggle' | 'hold'): void {
-    const snapshot = tx.snapshot();
-    const keyAllowed = view !== null && view !== undefined
-      && keyBlockedReasons(view, snapshot).length === 0;
-    if (mode === 'hold' || runtime.remoteController) {
-      if (!pressed) void tx.pttOff();
-      else if (keyAllowed) tx.pttOn();
-      return;
-    }
-    if (!pressed) return;
-    const ownLatched = snapshot.intent === 'latched'
-      && (snapshot.phase === 'key-confirm-pending' || snapshot.phase === 'active');
-    if (ownLatched) requestUnkey();
-    else if (keyAllowed) requestKey();
+  /** RC-28 TRANSMIT: the decision is `rc28TransmitAction` (lib/runtime/rc28). */
+  function rc28Transmit(pressed: boolean, mode: Rc28TransmitMode): void {
+    const action = rc28TransmitAction(pressed, mode, tx.snapshot(), runtime.remoteController);
+    if (action === 'key') requestKey();
+    else if (action === 'unkey') requestUnkey();
+    else if (action === 'ptt-on') tx.pttOn();
+    else if (action === 'ptt-off') void tx.pttOff();
   }
   let rc28TxLit = $derived(txState.radioTx === 'on' || txState.phase === 'active');
 

@@ -65,6 +65,36 @@ export function runRc28Function(fn: Rc28Function): void {
   });
 }
 
+export type Rc28TransmitAction = 'key' | 'unkey' | 'ptt-on' | 'ptt-off' | 'none';
+
+interface Rc28TxSnapshot {
+  readonly fresh: boolean;
+  readonly phase: string;
+  readonly intent: 'momentary' | 'latched' | null;
+}
+
+/**
+ * What a TRANSMIT edge does. Keying uses the on-screen PTT's own gate
+ * (`RxTxSurface` keyUnavailable: a fresh snapshot in the idle phase); a
+ * toggle press on the operator's latched transmit releases it, as the
+ * on-screen PTT's second press does. A remote controller keys only
+ * momentarily, like the on-screen PTT in that mode.
+ */
+export function rc28TransmitAction(
+  pressed: boolean, mode: Rc28TransmitMode, tx: Rc28TxSnapshot, remote: boolean,
+): Rc28TransmitAction {
+  const keyAllowed = tx.fresh && tx.phase === 'idle';
+  if (mode === 'hold' || remote) {
+    if (!pressed) return 'ptt-off';
+    return keyAllowed ? 'ptt-on' : 'none';
+  }
+  if (!pressed) return 'none';
+  if (tx.intent === 'latched' && (tx.phase === 'key-confirm-pending' || tx.phase === 'active')) {
+    return 'unkey';
+  }
+  return keyAllowed ? 'key' : 'none';
+}
+
 export interface Rc28Tuner {
   rotate(ticks: number): void;
   dispose(): void;
