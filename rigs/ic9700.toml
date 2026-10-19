@@ -1147,6 +1147,27 @@ display_unit = "Hz"
 quantization = "reject"
 restoration = "exact"
 
+# S-meter calibration. IC-9700 CI-V Reference Guide, command 15 02 (Read
+# S-meter level): 0000=S0, 0120=S9, 0241=S9+60 dB. Only these three anchors
+# are published; intermediate S-units interpolate linearly between them.
+[meters.s_meter]
+redline_raw = 120
+
+[[meters.s_meter.calibration]]
+raw = 0
+actual = -54.0
+label = "S0"
+
+[[meters.s_meter.calibration]]
+raw = 120
+actual = 0.0
+label = "S9"
+
+[[meters.s_meter.calibration]]
+raw = 241
+actual = 60.0
+label = "S9+60"
+
 # SWR meter calibration — piecewise-linear lookup from raw 0–255 to SWR ratio.
 # First four points (0=1.0, 48=1.5, 80=2.0, 120=3.0) match the firmware-anchored
 # Icom curve documented for sibling models. Fifth point (240, 6.0) follows

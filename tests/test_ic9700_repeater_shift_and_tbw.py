@@ -72,3 +72,14 @@ def test_mod_input_sources_include_lan() -> None:
     profile = resolve_radio_profile(model="IC-9700")
     assert profile.data_mode_inputs is not None
     assert (5, "LAN") in profile.data_mode_inputs
+
+
+def test_s_meter_is_calibrated() -> None:
+    # IC-9700 CI-V Reference Guide, 15 02: 0000=S0, 0120=S9, 0241=S9+60 dB.
+    profile = resolve_radio_profile(model="IC-9700")
+    assert profile.meter_calibrations is not None
+    points = [
+        (p["raw"], p["actual"], p["label"])
+        for p in profile.meter_calibrations["s_meter"]
+    ]
+    assert points == [(0, -54.0, "S0"), (120, 0.0, "S9"), (241, 60.0, "S9+60")]
