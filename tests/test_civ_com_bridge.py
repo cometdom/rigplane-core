@@ -135,3 +135,28 @@ async def test_manager_saves_config_and_reports_status(tmp_path: Path) -> None:
     assert status["COM13"] == "stopped"
     await manager.stop()
     assert radio.taps == []
+
+
+async def test_bridged_frames_leave_no_unclaimed_ack_for_the_unkey() -> None:
+    """A bridged frame is answered to the bridge's own address, which rigplane
+    never routes; tracking it as an ACK sink made every later blocking write
+    (the PTT unkey) doubt its own FB and settle UNCERTAIN."""
+    from rigplane.radio import IcomRadio
+    from test_radio import MockTransport
+
+    transport = MockTransport()
+    radio = IcomRadio("192.168.1.104", timeout=0.2, model="IC-9700")
+    radio._civ_transport = transport
+    radio._ctrl_transport = transport
+    radio._connected = True
+    try:
+        await radio.send_civ_raw_fire_and_forget(b"\xfe\xfe\xa2\xe1\x0f\x01\xfd")
+        tracker = radio._civ_request_tracker
+        tracker.drop_ack_sinks()
+        assert tracker.ack_unclaimed_at is None
+        # rigplane's own fire-and-forget writes keep their sink.
+        await radio.send_civ_raw_fire_and_forget(b"\xfe\xfe\xa2\xe0\x0f\x01\xfd")
+        tracker.drop_ack_sinks()
+        assert tracker.ack_unclaimed_at is not None
+    finally:
+        radio._connected = False

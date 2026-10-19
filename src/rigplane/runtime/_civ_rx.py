@@ -4258,12 +4258,16 @@ class CivRuntime:
             # Reads take a sink as well as writes: a refusal is a bare FA that
             # names no command, and ``_drain_ack_sinks_before_blocking`` waits
             # only for answers that a sink is registered for (MOR-2748).
-            token_or_future = tracker.register_ack(
-                wait=False,
-                response_key=request_key if expects_response else None,
-            )
-            if isinstance(token_or_future, int):
-                ack_sink_token = token_or_future
+            # A frame sent under another controller address (a CI-V COM
+            # bridge) is answered to that address, which ``_route_civ_frame``
+            # never routes here, so no sink waits for it.
+            if parsed_frame.from_addr == CONTROLLER_ADDR:
+                token_or_future = tracker.register_ack(
+                    wait=False,
+                    response_key=request_key if expects_response else None,
+                )
+                if isinstance(token_or_future, int):
+                    ack_sink_token = token_or_future
 
             try:
                 self.start_pump()
