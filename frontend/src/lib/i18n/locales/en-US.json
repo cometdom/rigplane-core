@@ -386,5 +386,8 @@
   "core.civBridge.allowTx": "Allow TX",
   "core.civBridge.remove": "Remove",
   "core.civBridge.add": "Add",
-  "core.civBridge.none": "No port yet."
+  "core.civBridge.none": "No port yet.",
+  "core.civBridge.statusRunning": "running",
+  "core.civBridge.statusStopped": "stopped",
+  "core.civBridge.statusError": "error: {detail}"
 }

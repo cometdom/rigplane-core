@@ -40,86 +40,109 @@
   function add(port: string): void {
     if (!port || settings?.bridges.some((b) => b.port === port)) return;
     save([...(settings?.bridges ?? []), { port, enabled: true, allowTx: false }]);
+    addPort = '';
   }
   function remove(port: string): void {
     save((settings?.bridges ?? []).filter((b) => b.port !== port));
   }
   const inUse = (port: string) => settings?.bridges.some((b) => b.port === port) ?? false;
+  function statusLabel(status: string | undefined): string {
+    if (status === 'running') return t('core.civBridge.statusRunning');
+    if (status?.startsWith('error: ')) return t('core.civBridge.statusError', { detail: status.slice(7) });
+    return t('core.civBridge.statusStopped');
+  }
 </script>
 
 <div class="civ-bridges" data-testid="civ-bridges">
   <p class="note">{t('core.civBridge.intro')}</p>
 
   {#if settings}
-    <h4>{t('core.civBridge.pairs')}</h4>
-    {#if !settings.com0com}
-      <p class="note">{t('core.civBridge.noCom0com')}</p>
-    {:else}
-      {#each settings.pairs as pair (pair.a + pair.b)}
-        <div class="row">
-          <span class="pair">{pair.a} ↔ {pair.b}</span>
-          {#if !inUse(pair.a) && !inUse(pair.b)}
-            <button type="button" disabled={busy} onclick={() => add(pair.b)}>
-              {t('core.civBridge.useFor', { port: pair.b })}
-            </button>
-          {:else}
-            <span class="note">
-              {t('core.civBridge.programUses', { port: inUse(pair.b) ? pair.a : pair.b })}
-            </span>
-          {/if}
+    <section>
+      <h4>{t('core.civBridge.bridges')}</h4>
+      {#if settings.bridges.length === 0}
+        <p class="note">{t('core.civBridge.none')}</p>
+      {:else}
+        <div class="grid bridges">
+          {#each settings.bridges as bridge (bridge.port)}
+            <span class="port" data-testid={`civ-bridge-${bridge.port}`}>{bridge.port}</span>
+            <span class="status" data-state={bridge.status}>{statusLabel(bridge.status)}</span>
+            <label><input type="checkbox" checked={bridge.enabled} disabled={busy}
+              onchange={(e) => update(bridge.port, { enabled: e.currentTarget.checked })} />
+              {t('core.civBridge.enabled')}</label>
+            <label><input type="checkbox" checked={bridge.allowTx} disabled={busy}
+              onchange={(e) => update(bridge.port, { allowTx: e.currentTarget.checked })} />
+              {t('core.civBridge.allowTx')}</label>
+            <button type="button" disabled={busy} onclick={() => remove(bridge.port)}>{t('core.civBridge.remove')}</button>
+          {/each}
         </div>
-      {/each}
+      {/if}
       <div class="row">
-        <input aria-label="COM A" bind:value={pairA} size="6" />
-        <span>↔</span>
-        <input aria-label="COM B" bind:value={pairB} size="6" />
-        <button type="button" disabled={busy} onclick={() => run(() => createCom0comPair(pairA.trim(), pairB.trim()))}>
-          {t('core.civBridge.createPair')}
-        </button>
-        <span class="note">{t('core.civBridge.createHint')}</span>
+        <select bind:value={addPort} aria-label="COM">
+          <option value=""></option>
+          {#each settings.ports as port (port.device)}
+            {#if !inUse(port.device)}<option value={port.device}>{port.device} — {port.description}</option>{/if}
+          {/each}
+        </select>
+        <button type="button" disabled={busy || !addPort} onclick={() => add(addPort)}>{t('core.civBridge.add')}</button>
       </div>
-    {/if}
+    </section>
 
-    <h4>{t('core.civBridge.bridges')}</h4>
-    {#if settings.bridges.length === 0}<p class="note">{t('core.civBridge.none')}</p>{/if}
-    {#each settings.bridges as bridge (bridge.port)}
-      <div class="row" data-testid={`civ-bridge-${bridge.port}`}>
-        <span class="pair">{bridge.port}</span>
-        <label><input type="checkbox" checked={bridge.enabled} disabled={busy}
-          onchange={(e) => update(bridge.port, { enabled: e.currentTarget.checked })} />
-          {t('core.civBridge.enabled')}</label>
-        <label><input type="checkbox" checked={bridge.allowTx} disabled={busy}
-          onchange={(e) => update(bridge.port, { allowTx: e.currentTarget.checked })} />
-          {t('core.civBridge.allowTx')}</label>
-        <span class="status" data-state={bridge.status}>{bridge.status ?? ''}</span>
-        <button type="button" disabled={busy} onclick={() => remove(bridge.port)}>{t('core.civBridge.remove')}</button>
-      </div>
-    {/each}
-    <div class="row">
-      <select bind:value={addPort} aria-label="COM">
-        <option value=""></option>
-        {#each settings.ports as port (port.device)}
-          {#if !inUse(port.device)}<option value={port.device}>{port.device} — {port.description}</option>{/if}
-        {/each}
-      </select>
-      <button type="button" disabled={busy || !addPort} onclick={() => add(addPort)}>{t('core.civBridge.add')}</button>
-    </div>
+    <section>
+      <h4>{t('core.civBridge.pairs')}</h4>
+      {#if !settings.com0com}
+        <p class="note">{t('core.civBridge.noCom0com')}</p>
+      {:else}
+        {#if settings.pairs.length > 0}
+          <div class="grid pairs">
+            {#each settings.pairs as pair (pair.a + pair.b)}
+              <span class="port">{pair.a} ↔ {pair.b}</span>
+              {#if !inUse(pair.a) && !inUse(pair.b)}
+                <button type="button" disabled={busy} onclick={() => add(pair.b)}>
+                  {t('core.civBridge.useFor', { port: pair.b })}
+                </button>
+              {:else}
+                <span class="note">{t('core.civBridge.programUses', { port: inUse(pair.b) ? pair.a : pair.b })}</span>
+              {/if}
+            {/each}
+          </div>
+        {/if}
+        <div class="row">
+          <input aria-label="COM A" bind:value={pairA} size="6" />
+          <span>↔</span>
+          <input aria-label="COM B" bind:value={pairB} size="6" />
+          <button type="button" disabled={busy} onclick={() => run(() => createCom0comPair(pairA.trim(), pairB.trim()))}>
+            {t('core.civBridge.createPair')}
+          </button>
+        </div>
+        <p class="note">{t('core.civBridge.createHint')}</p>
+      {/if}
+    </section>
   {/if}
   {#if error}<p class="note error" role="alert">{error}</p>{/if}
 </div>
 
 <style>
-  .civ-bridges { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-  h4 { margin: 6px 0 0; font-size: 12px; color: var(--v2-text-secondary, #9aa); }
+  .civ-bridges { display: flex; flex-direction: column; gap: 12px; padding: 6px 4px; font-size: 12px; }
+  section { display: flex; flex-direction: column; gap: 8px; }
+  h4 {
+    margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--v2-text-secondary, #9aa);
+  }
+  .grid { display: grid; align-items: center; gap: 6px 14px; }
+  .grid.bridges { grid-template-columns: max-content max-content max-content 1fr max-content; }
+  .grid.pairs { grid-template-columns: max-content 1fr; }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  .pair { min-width: 7rem; font-variant-numeric: tabular-nums; }
-  .note { margin: 0; color: var(--v2-text-secondary, #9aa); }
+  .port { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .note { margin: 0; line-height: 1.4; color: var(--v2-text-secondary, #9aa); }
   .error { color: var(--v2-accent-red, #ef4444); }
+  .status { color: var(--v2-text-secondary, #9aa); }
   .status[data-state='running'] { color: var(--v2-accent-green, #22c55e); }
-  input, select, button {
-    padding: 3px 8px; font: inherit; color: var(--v2-text-primary, inherit);
+  label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  input:not([type='checkbox']), select, button {
+    padding: 4px 8px; font: inherit; color: var(--v2-text-primary, inherit);
     background: var(--v2-bg-card, #141b27); border: 1px solid var(--v2-border-darker, #333); border-radius: 4px;
   }
-  input[type='checkbox'] { padding: 0; }
+  select { min-width: 16rem; }
   button { cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
 </style>

@@ -386,5 +386,8 @@
   "core.civBridge.allowTx": "送信を許可",
   "core.civBridge.remove": "削除",
   "core.civBridge.add": "追加",
-  "core.civBridge.none": "ポートはまだありません。"
+  "core.civBridge.none": "ポートはまだありません。",
+  "core.civBridge.statusRunning": "動作中",
+  "core.civBridge.statusStopped": "停止",
+  "core.civBridge.statusError": "エラー: {detail}"
 }

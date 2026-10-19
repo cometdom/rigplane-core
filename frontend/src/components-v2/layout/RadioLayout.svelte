@@ -1572,7 +1572,7 @@
 
   .settings-modal {
     width: 90%;
-    max-width: 700px;
+    max-width: 820px;
     max-height: 85vh;
     background: var(--v2-bg-primary, #0f0f1a);
     border: 1px solid var(--v2-border-panel, #333);
@@ -1628,6 +1628,12 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  /* Sections keep their full height and the dialog scrolls; without this a
+     flex column squeezes them to fit 85vh and clips their content. */
+  .settings-content > :global(*) {
+    flex-shrink: 0;
   }
 
   .settings-vfo-ops-row {

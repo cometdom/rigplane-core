@@ -385,5 +385,8 @@
   "core.civBridge.allowTx": "Разрешить передачу",
   "core.civBridge.remove": "Удалить",
   "core.civBridge.add": "Добавить",
-  "core.civBridge.none": "Портов пока нет."
+  "core.civBridge.none": "Портов пока нет.",
+  "core.civBridge.statusRunning": "работает",
+  "core.civBridge.statusStopped": "остановлен",
+  "core.civBridge.statusError": "ошибка: {detail}"
 }

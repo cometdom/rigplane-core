@@ -386,5 +386,8 @@
   "core.civBridge.allowTx": "Autoriser l'émission",
   "core.civBridge.remove": "Retirer",
   "core.civBridge.add": "Ajouter",
-  "core.civBridge.none": "Aucun port pour l'instant."
+  "core.civBridge.none": "Aucun port pour l'instant.",
+  "core.civBridge.statusRunning": "en service",
+  "core.civBridge.statusStopped": "arrêté",
+  "core.civBridge.statusError": "erreur : {detail}"
 }

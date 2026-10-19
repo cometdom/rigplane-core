@@ -62,7 +62,7 @@
 </div>
 
 <style>
-  .radio-menu { display: flex; flex-direction: column; gap: 6px; }
+  .radio-menu { display: flex; flex-direction: column; gap: 6px; padding: 6px 4px; font-size: 12px; }
   .radio-menu-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
   .radio-menu-note { margin: 0; font-size: 0.85em; opacity: 0.8; }
 </style>
