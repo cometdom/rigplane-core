@@ -143,6 +143,7 @@
     VfoOperationCallbacks, VfoOperationProjectionInput,
   } from '../../semantic/vfo-operation-projection';
   import { keyBlockedReasons } from '../../semantic/rx-tx-surface';
+  import Rc28Wiring from './Rc28Wiring.svelte';
   import VfoSurface, { type VfoSelection } from '../../semantic/VfoSurface.svelte';
   import SemanticControlPanel from '../layout/SemanticControlPanel.svelte';
   import ModInputTxWarning from '../panels/ModInputTxWarning.svelte';
@@ -1836,6 +1837,29 @@
   }
 
   /**
+   * RC-28 TRANSMIT. Keying passes the same `keyBlockedReasons` gate that
+   * disables the on-screen PTT; a toggle press on the operator's own latched
+   * transmit releases it, as the on-screen PTT does. Hold mode (and a remote
+   * controller, which can only key momentarily) keys while the key is down.
+   */
+  function rc28Transmit(pressed: boolean, mode: 'toggle' | 'hold'): void {
+    const snapshot = tx.snapshot();
+    const keyAllowed = view !== null && view !== undefined
+      && keyBlockedReasons(view, snapshot).length === 0;
+    if (mode === 'hold' || runtime.remoteController) {
+      if (!pressed) void tx.pttOff();
+      else if (keyAllowed) tx.pttOn();
+      return;
+    }
+    if (!pressed) return;
+    const ownLatched = snapshot.intent === 'latched'
+      && (snapshot.phase === 'key-confirm-pending' || snapshot.phase === 'active');
+    if (ownLatched) requestUnkey();
+    else if (keyAllowed) requestKey();
+  }
+  let rc28TxLit = $derived(txState.radioTx === 'on' || txState.phase === 'active');
+
+  /**
    * ATU TUNE emits a CARRIER — a transmit-causing action (MOR-1262 §2 slice 1
    * safety note i). Routing decision, recorded on MOR-1265: the *gate* is the
    * App-owned TX authority — the shared `keyBlockedReasons` predicate on the
@@ -3293,6 +3317,7 @@
   </ReceiverInstrumentHost>
   {/snippet}
   </StationMeterInstrumentHost>
+{#if runtime.caps?.capabilities?.includes('rc28') === true}<Rc28Wiring onTransmit={rc28Transmit} txLit={rc28TxLit} />{/if}
 </div>
 
 <style>
