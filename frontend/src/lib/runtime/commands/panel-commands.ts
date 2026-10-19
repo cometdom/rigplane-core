@@ -11,6 +11,7 @@
  * See issue #999, parent #959 (M-4).
  */
 
+import { readRxMonitorPreference, rememberRxMonitorMode } from '../rx-monitor-preference';
 import {
   getActiveReceiver,
   getRadioState,
@@ -1200,10 +1201,16 @@ function unmuteServerMonitor(): void {
   dispatchRadioIntent({ name: 'set_monitor_mute', params: { on: false } });
 }
 
+/** Start on the operator's remembered RX monitor choice (LIVE by default). */
+export function restoreRxMonitorMode(): void {
+  if (readRxMonitorPreference() === 'live') makeRxAudioHandlers().onMonitorModeChange('live');
+}
+
 export function makeRxAudioHandlers() {
   return {
     onMonitorModeChange: (mode: string) => {
       if (mode !== 'live' && mode !== 'mute' && mode !== 'local' && mode !== 'radio') return;
+      rememberRxMonitorMode(mode);
       if (mode === 'live') {
         runtime.setMuted(false);
         unmuteServerMonitor();

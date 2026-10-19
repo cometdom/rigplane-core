@@ -45,6 +45,7 @@
   import KeyboardHandler from './KeyboardHandler.svelte';
   import SsbTxBandwidthControl from '../wiring/SsbTxBandwidthControl.svelte';
   import OverflowIndicator from '../wiring/OverflowIndicator.svelte';
+  import RxMonitorRestore from '../wiring/RxMonitorRestore.svelte';
   import ToneBurstButton from '../wiring/ToneBurstButton.svelte';
   import MemoryBankPanel from '../wiring/MemoryBankPanel.svelte';
   import type { BandInstrumentHandles } from '../../semantic/band-instruments';
@@ -890,6 +891,7 @@
     <StatusBar onSettings={() => (settingsOpen = true)} {declared} showManagedTotControl={true} />
     <KeyboardHandler config={keyboardConfig} onAction={keyboardHandlers.dispatch} />
 
+    <RxMonitorRestore />
     <section class="receiver-deck rmr-grid" bind:this={receiverDeckElement} style={receiverDeckStyle}>
       <div class="rmr-top">
         <div class="rmr-vfo">{@render instruments.vfo('standard', undefined, vfoOperationControls)}</div>

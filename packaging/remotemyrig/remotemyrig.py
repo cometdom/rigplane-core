@@ -343,7 +343,9 @@ def main() -> None:
     os.environ.setdefault(
         "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
         "--disable-background-timer-throttling --disable-renderer-backgrounding "
-        "--disable-backgrounding-occluded-windows",
+        "--disable-backgrounding-occluded-windows "
+        # RX audio starts in LIVE at launch, before any click in the window.
+        "--autoplay-policy=no-user-gesture-required",
     )
     import webview
 
