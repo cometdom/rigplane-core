@@ -2,8 +2,9 @@
 
 The window (pywebview / WebView2) shows the rigplane web UI. rigplane runs as
 a child process of this same executable (``--server``), started with the
-radio settings saved on first run; the radio password lives in the Windows
-Credential Manager (keyring), never in a file. Closing the window asks the
+radio chosen at start (several can be configured, over the network or USB);
+a network password lives in the Windows Credential Manager (keyring), never
+in a file. Closing the window asks the
 server to stop through the same path as Ctrl+C (POST /api/v1/app/shutdown).
 
 A foot switch that sends a key (Insert by default) is captured globally and
@@ -29,14 +30,26 @@ APP = "RemoteMyRig"
 SETTINGS_PATH = (
     Path(os.environ.get("APPDATA", str(Path.home()))) / APP / "settings.json"
 )
-DEFAULTS: dict[str, Any] = {
+MODELS = ("IC-9700", "IC-7300", "IC-7300MK2", "IC-705", "IC-7610")
+BAUD_RATES = (115200, 57600, 38400, 19200, 9600, 4800)
+RADIO_DEFAULTS: dict[str, Any] = {
+    "name": "",
     "model": "IC-9700",
+    "connection": "lan",  # "lan" (network) or "usb" (serial CI-V + USB audio)
     "host": "",
     "user": "",
+    "serial_port": "",
+    "serial_baud": 115200,
+    "rx_device": "",  # empty: rigplane picks the radio's USB audio itself
+    "tx_device": "",
+    "extra_args": [],
+}
+DEFAULTS: dict[str, Any] = {
     "port": 8080,
     "listen": "127.0.0.1",
     "footswitch_key": "Insert",
-    "extra_args": [],
+    "last_radio": "",
+    "radios": [],
 }
 # Virtual-key codes for the keys a foot switch is usually set to send.
 FOOTSWITCH_KEYS = {
@@ -52,6 +65,20 @@ SHUTDOWN_TIMEOUT_S = 20.0
 # ── settings ────────────────────────────────────────────────────────────
 
 
+def normalize_radio(raw: dict[str, Any]) -> dict[str, Any]:
+    radio = {**RADIO_DEFAULTS, **{k: v for k, v in raw.items() if k in RADIO_DEFAULTS}}
+    if radio["connection"] not in ("lan", "usb"):
+        radio["connection"] = "lan"
+    try:
+        radio["serial_baud"] = int(radio["serial_baud"])
+    except (TypeError, ValueError):
+        radio["serial_baud"] = RADIO_DEFAULTS["serial_baud"]
+    if not isinstance(radio["extra_args"], list):
+        radio["extra_args"] = []
+    radio["name"] = str(radio["name"]).strip() or str(radio["model"])
+    return radio
+
+
 def load_settings(path: Path = SETTINGS_PATH) -> dict[str, Any]:
     try:
         stored = json.loads(path.read_text(encoding="utf-8"))
@@ -59,7 +86,16 @@ def load_settings(path: Path = SETTINGS_PATH) -> dict[str, Any]:
         stored = {}
     if not isinstance(stored, dict):
         stored = {}
-    return {**DEFAULTS, **{k: v for k, v in stored.items() if k in DEFAULTS}}
+    settings = {**DEFAULTS, **{k: v for k, v in stored.items() if k in DEFAULTS}}
+    radios = stored.get("radios")
+    if isinstance(radios, list):
+        settings["radios"] = [normalize_radio(r) for r in radios if isinstance(r, dict)]
+    elif stored.get("host"):
+        # Settings written before several radios were supported: one LAN radio.
+        settings["radios"] = [normalize_radio({**stored, "connection": "lan"})]
+    else:
+        settings["radios"] = []
+    return settings
 
 
 def save_settings(settings: dict[str, Any], path: Path = SETTINGS_PATH) -> None:
@@ -68,35 +104,98 @@ def save_settings(settings: dict[str, Any], path: Path = SETTINGS_PATH) -> None:
     path.write_text(json.dumps(clean, indent=2), encoding="utf-8")
 
 
-def needs_setup(settings: dict[str, Any]) -> bool:
-    return not settings["host"] or not settings["model"]
+def radio_ready(radio: dict[str, Any]) -> bool:
+    if radio["connection"] == "usb":
+        return bool(radio["serial_port"])
+    return bool(radio["host"])
 
 
-def _credential_name(settings: dict[str, Any]) -> str:
-    return f"{settings['host']}:{settings['user']}"
+def find_radio(settings: dict[str, Any], name: str) -> dict[str, Any] | None:
+    return next((r for r in settings["radios"] if r["name"] == name), None)
 
 
-def get_password(settings: dict[str, Any]) -> str:
+def start_choice(settings: dict[str, Any]) -> tuple[str, dict[str, Any] | None]:
+    """What the window opens on: ``setup``, ``choose`` or ``launch`` a radio."""
+    ready = [r for r in settings["radios"] if radio_ready(r)]
+    if not ready:
+        return "setup", None
+    if len(ready) == 1:
+        return "launch", ready[0]
+    return "choose", None
+
+
+def _credential_name(radio: dict[str, Any]) -> str:
+    return f"{radio['host']}:{radio['user']}"
+
+
+def get_password(radio: dict[str, Any]) -> str:
+    if radio["connection"] != "lan":
+        return ""
     import keyring
 
-    return keyring.get_password(APP, _credential_name(settings)) or ""
+    return keyring.get_password(APP, _credential_name(radio)) or ""
 
 
-def set_password(settings: dict[str, Any], password: str) -> None:
+def set_password(radio: dict[str, Any], password: str) -> None:
     import keyring
 
-    keyring.set_password(APP, _credential_name(settings), password)
+    keyring.set_password(APP, _credential_name(radio), password)
+
+
+def list_devices() -> dict[str, list[dict[str, str]]]:
+    """COM ports and audio devices for the setup page (empty when unavailable)."""
+    ports: list[dict[str, str]] = []
+    inputs: list[dict[str, str]] = []
+    outputs: list[dict[str, str]] = []
+    try:
+        from serial.tools import list_ports
+
+        ports = [
+            {"value": p.device, "label": f"{p.device} — {p.description}"}
+            for p in sorted(list_ports.comports(), key=lambda p: p.device)
+        ]
+    except Exception:  # noqa: BLE001 - the page then offers free text only
+        pass
+    try:
+        import sounddevice
+
+        seen_in: set[str] = set()
+        seen_out: set[str] = set()
+        for device in sounddevice.query_devices():
+            name = str(device["name"])
+            if device["max_input_channels"] > 0 and name not in seen_in:
+                seen_in.add(name)
+                inputs.append({"value": name, "label": name})
+            if device["max_output_channels"] > 0 and name not in seen_out:
+                seen_out.add(name)
+                outputs.append({"value": name, "label": name})
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ports": ports, "inputs": inputs, "outputs": outputs}
 
 
 # ── rigplane child process ──────────────────────────────────────────────
 
 
-def server_command(settings: dict[str, Any]) -> list[str]:
+def server_command(settings: dict[str, Any], radio: dict[str, Any]) -> list[str]:
     """The rigplane CLI arguments for the child (after ``--server``)."""
+    args = ["--model", str(radio["model"])]
+    if radio["connection"] == "usb":
+        args += [
+            "--backend",
+            "serial",
+            "--serial-port",
+            str(radio["serial_port"]),
+            "--serial-baud",
+            str(radio["serial_baud"]),
+        ]
+        if radio["rx_device"]:
+            args += ["--rx-device", str(radio["rx_device"])]
+        if radio["tx_device"]:
+            args += ["--tx-device", str(radio["tx_device"])]
     return [
-        "--model",
-        str(settings["model"]),
-        *[str(arg) for arg in settings["extra_args"]],
+        *args,
+        *[str(arg) for arg in radio["extra_args"]],
         "web",
         "--listen",
         str(settings["listen"]),
@@ -105,15 +204,18 @@ def server_command(settings: dict[str, Any]) -> list[str]:
     ]
 
 
-def server_environment(settings: dict[str, Any], password: str) -> dict[str, str]:
+def server_environment(radio: dict[str, Any], password: str) -> dict[str, str]:
     env = dict(os.environ)
     env["RIGPLANE_APP_SHUTDOWN"] = "1"
-    if settings["host"]:
-        env["ICOM_HOST"] = str(settings["host"])
-    if settings["user"]:
-        env["ICOM_USER"] = str(settings["user"])
-    if password:
-        env["ICOM_PASS"] = password
+    for name in ("ICOM_HOST", "ICOM_USER", "ICOM_PASS"):
+        env.pop(name, None)
+    if radio["connection"] == "lan":
+        if radio["host"]:
+            env["ICOM_HOST"] = str(radio["host"])
+        if radio["user"]:
+            env["ICOM_USER"] = str(radio["user"])
+        if password:
+            env["ICOM_PASS"] = password
     return env
 
 
@@ -129,15 +231,17 @@ def run_server(argv: list[str]) -> None:
     main()
 
 
-def start_server(settings: dict[str, Any]) -> subprocess.Popen[bytes]:
+def start_server(
+    settings: dict[str, Any], radio: dict[str, Any]
+) -> subprocess.Popen[bytes]:
     if getattr(sys, "frozen", False):
         base = [sys.executable, "--server"]
     else:
         base = [sys.executable, os.path.abspath(__file__), "--server"]
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     return subprocess.Popen(
-        [*base, *server_command(settings)],
-        env=server_environment(settings, get_password(settings)),
+        [*base, *server_command(settings, radio)],
+        env=server_environment(radio, get_password(radio)),
         creationflags=flags,
     )
 
@@ -245,42 +349,131 @@ class FootSwitch:
 
 PAGE_STYLE = """
 <style>
- body{background:#0b0f17;color:#d8e1ee;font:15px system-ui,sans-serif;
-      display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
- .box{width:420px} h1{font-size:20px;margin:0 0 16px}
+ body{background:#0b0f17;color:#d8e1ee;font:15px system-ui,sans-serif;margin:0;
+      display:flex;align-items:center;justify-content:center;min-height:100vh}
+ .box{width:480px;padding:24px 0} h1{font-size:20px;margin:0 0 16px}
+ h2{font-size:14px;margin:22px 0 6px;color:#9fb0c6;text-transform:uppercase;letter-spacing:.06em}
  label{display:block;margin:10px 0 4px;color:#9fb0c6}
  input,select{width:100%;padding:8px;background:#141b27;color:#e8eef7;
-      border:1px solid #2a3547;border-radius:4px;box-sizing:border-box}
+      border:1px solid #2a3547;border-radius:4px;box-sizing:border-box;font:inherit}
+ .choice{display:flex;gap:16px;margin-top:6px} .choice label{display:flex;gap:6px;margin:0;color:#e8eef7}
+ .choice input{width:auto}
  button{margin-top:18px;padding:10px 16px;background:#1f6feb;color:#fff;border:0;
       border-radius:4px;font-size:15px;cursor:pointer}
+ button.secondary{background:#253046} button.danger{background:#5c1d24}
+ .radio{display:flex;align-items:center;gap:10px;margin-top:10px}
+ .radio button{margin:0} .radio .go{flex:1;text-align:left}
+ .hint{color:#7d8ba1;font-size:13px;margin-top:4px}
  .err{color:#ff7b72;margin-top:12px;white-space:pre-wrap}
 </style>"""
 
 
+def _esc(value: object) -> str:
+    return html.escape(str(value), quote=True)
+
+
+def _js(value: object) -> str:
+    """A JSON literal safe inside an HTML attribute or a <script> block."""
+    return _esc(json.dumps(value).replace("</", "<\\/"))
+
+
 def message_page(text: str) -> str:
-    return f"<html><head>{PAGE_STYLE}</head><body><div class='box'><h1>{APP}</h1><p>{text}</p></div></body></html>"
+    return (
+        f"<html><head>{PAGE_STYLE}</head><body><div class='box'><h1>{APP}</h1>"
+        f"<p>{text}</p></div></body></html>"
+    )
 
 
-def setup_page(settings: dict[str, Any]) -> str:
-    def opt(value: str) -> str:
-        sel = " selected" if settings["model"] == value else ""
-        return f"<option{sel}>{value}</option>"
-
-    def val(key: str) -> str:
-        return html.escape(str(settings[key]), quote=True)
-
+def choose_page(settings: dict[str, Any]) -> str:
+    rows = "".join(
+        f"""<div class='radio'>
+<button class='go' onclick='pywebview.api.start({_js(r["name"])})'>{_esc(r["name"])}
+ <span class='hint'>— {_esc(r["model"])}, {"USB " + _esc(r["serial_port"]) if r["connection"] == "usb" else _esc(r["host"])}</span></button>
+<button class='secondary' onclick='pywebview.api.edit({_js(r["name"])})'>Modifier</button></div>"""
+        for r in settings["radios"]
+        if radio_ready(r)
+    )
     return f"""<html><head>{PAGE_STYLE}</head><body><div class='box'>
-<h1>{APP} — réglages de la radio</h1>
-<label>Modèle</label><select id='model'>{opt("IC-9700")}{opt("IC-7300")}</select>
-<label>Adresse IP de la radio</label><input id='host' value='{val("host")}'>
-<label>Utilisateur réseau</label><input id='user' value='{val("user")}'>
-<label>Mot de passe réseau (laisser vide pour garder l'actuel)</label><input id='pass' type='password'>
+<h1>{APP} — quelle radio ?</h1>{rows}
+<button class='secondary' onclick='pywebview.api.edit("")'>Ajouter une radio</button>
+</div></body></html>"""
+
+
+def setup_page(settings: dict[str, Any], radio: dict[str, Any] | None = None) -> str:
+    editing = radio is not None
+    r = radio or normalize_radio({"name": ""})
+    model_options = "".join(
+        f"<option{' selected' if r['model'] == m else ''}>{m}</option>" for m in MODELS
+    )
+    baud_options = "".join(
+        f"<option{' selected' if r['serial_baud'] == b else ''}>{b}</option>"
+        for b in BAUD_RATES
+    )
+    lan = r["connection"] == "lan"
+    current = json.dumps(
+        {"port": r["serial_port"], "rx": r["rx_device"], "tx": r["tx_device"]}
+    ).replace("</", "<\\/")
+    original = json.dumps(r["name"] if editing else "").replace("</", "<\\/")
+    others = any(x["name"] != r["name"] for x in settings["radios"] if radio_ready(x))
+    return f"""<html><head>{PAGE_STYLE}</head><body><div class='box'>
+<h1>{APP} — {"modifier la radio" if editing else "nouvelle radio"}</h1>
+<label>Nom</label><input id='name' value='{_esc(r["name"])}' placeholder='ex. IC-7300 USB'>
+<label>Modèle</label><select id='model'>{model_options}</select>
+<label>Connexion</label>
+<div class='choice'>
+ <label><input type='radio' name='conn' value='lan' {"checked" if lan else ""} onchange='toggle()'>Réseau (LAN)</label>
+ <label><input type='radio' name='conn' value='usb' {"" if lan else "checked"} onchange='toggle()'>USB</label>
+</div>
+<div id='lan'>
+ <label>Adresse IP de la radio</label><input id='host' value='{_esc(r["host"])}'>
+ <label>Utilisateur réseau</label><input id='user' value='{_esc(r["user"])}'>
+ <label>Mot de passe réseau (vide = garder l'actuel)</label><input id='pass' type='password'>
+</div>
+<div id='usb'>
+ <label>Port COM de la radio</label><select id='port'></select>
+ <div class='hint'>Le port « Silicon Labs CP210x » de la radio, dans le Gestionnaire de périphériques.</div>
+ <label>Vitesse (MENU &gt; SET &gt; Connectors &gt; CI-V &gt; CI-V USB Baud Rate)</label>
+ <select id='baud'>{baud_options}</select>
+ <label>Carte son — réception</label><select id='rx'></select>
+ <label>Carte son — émission</label><select id='tx'></select>
+</div>
+<h2>Commun à toutes les radios</h2>
 <label>Touche de la pédale (Insert, F13…F24, Pause, ScrollLock ; vide = aucune)</label>
-<input id='key' value='{val("footswitch_key")}'>
-<button onclick="const v=(id)=>document.getElementById(id).value;
- pywebview.api.save({{model:v('model'),host:v('host'),user:v('user'),
- password:v('pass'),footswitch_key:v('key')}})">Enregistrer et se connecter</button>
-<div class='err' id='err'></div></div></body></html>"""
+<input id='key' value='{_esc(settings["footswitch_key"])}'>
+<button onclick='save()'>Enregistrer et se connecter</button>
+{"<button class='danger' onclick='pywebview.api.remove(" + _esc(original) + ")'>Supprimer cette radio</button>" if editing else ""}
+{"<button class='secondary' onclick='pywebview.api.choose()'>Retour à la liste</button>" if others else ""}
+<div class='err' id='err'></div></div>
+<script>
+const current = {current};
+const $ = (id) => document.getElementById(id);
+function conn() {{ return document.querySelector("input[name=conn]:checked").value; }}
+function toggle() {{
+  $('lan').style.display = conn() === 'lan' ? '' : 'none';
+  $('usb').style.display = conn() === 'usb' ? '' : 'none';
+}}
+function fill(select, items, value, auto) {{
+  select.innerHTML = '';
+  if (auto) select.add(new Option(auto, ''));
+  for (const item of items) select.add(new Option(item.label, item.value));
+  if (value && ![...select.options].some((o) => o.value === value)) select.add(new Option(value, value));
+  select.value = value || '';
+}}
+function save() {{
+  pywebview.api.save({original}, {{
+    name: $('name').value, model: $('model').value, connection: conn(),
+    host: $('host').value, user: $('user').value, password: $('pass').value,
+    serial_port: $('port').value, serial_baud: $('baud').value,
+    rx_device: $('rx').value, tx_device: $('tx').value, footswitch_key: $('key').value,
+  }}).then((error) => {{ if (error) $('err').textContent = error; }});
+}}
+toggle();
+window.addEventListener('pywebviewready', () => pywebview.api.devices().then((d) => {{
+  fill($('port'), d.ports, current.port, null);
+  fill($('rx'), d.inputs, current.rx, 'Automatique (recommandé)');
+  fill($('tx'), d.outputs, current.tx, 'Automatique (recommandé)');
+}}));
+</script></body></html>"""
 
 
 class SetupApi:
@@ -289,8 +482,64 @@ class SetupApi:
     def __init__(self, app: App) -> None:
         self._app = app
 
-    def save(self, form: dict[str, str]) -> None:
-        self._app.save(form)
+    def devices(self) -> dict[str, list[dict[str, str]]]:
+        return list_devices()
+
+    def save(self, original: str, form: dict[str, str]) -> str:
+        return self._app.save(original, form)
+
+    def start(self, name: str) -> None:
+        radio = find_radio(self._app.settings, name)
+        if radio is not None:
+            threading.Thread(
+                target=self._app.launch, args=(radio,), daemon=True
+            ).start()
+
+    def edit(self, name: str) -> None:
+        self._app.window.load_html(
+            setup_page(self._app.settings, find_radio(self._app.settings, name))
+        )
+
+    def remove(self, name: str) -> None:
+        self._app.settings["radios"] = [
+            r for r in self._app.settings["radios"] if r["name"] != name
+        ]
+        save_settings(self._app.settings)
+        self.choose()
+
+    def choose(self) -> None:
+        page, _ = start_choice(self._app.settings)
+        self._app.window.load_html(
+            choose_page(self._app.settings)
+            if page != "setup"
+            else setup_page(self._app.settings)
+        )
+
+
+def apply_form(
+    settings: dict[str, Any], original: str, form: dict[str, str]
+) -> tuple[dict[str, Any] | None, str]:
+    """Merge the setup form into ``settings``; (the saved radio, error text)."""
+    radio = normalize_radio(
+        {key: str(form.get(key, "")).strip() for key in RADIO_DEFAULTS if key in form}
+    )
+    if not radio_ready(radio):
+        return None, (
+            "Indiquez le port COM de la radio."
+            if radio["connection"] == "usb"
+            else "Indiquez l'adresse IP de la radio."
+        )
+    if any(
+        r["name"] == radio["name"] and r["name"] != original for r in settings["radios"]
+    ):
+        return None, "Une autre radio porte déjà ce nom."
+    old = find_radio(settings, original) if original else None
+    if old is not None:
+        radio["extra_args"] = old["extra_args"]
+    settings["radios"] = [r for r in settings["radios"] if r["name"] != original]
+    settings["radios"].append(radio)
+    settings["footswitch_key"] = str(form.get("footswitch_key", "")).strip()
+    return radio, ""
 
 
 class App:
@@ -300,19 +549,24 @@ class App:
         self.footswitch: FootSwitch | None = None
         self.window: Any = None
 
-    def save(self, form: dict[str, str]) -> None:
-        for key in ("model", "host", "user", "footswitch_key"):
-            self.settings[key] = str(form.get(key, "")).strip()
+    def save(self, original: str, form: dict[str, str]) -> str:
+        radio, error = apply_form(self.settings, original, form)
+        if radio is None:
+            return error
         save_settings(self.settings)
-        if form.get("password"):
-            set_password(self.settings, str(form["password"]))
-        threading.Thread(target=self.launch, daemon=True).start()
+        if radio["connection"] == "lan" and form.get("password"):
+            set_password(radio, str(form["password"]))
+        threading.Thread(target=self.launch, args=(radio,), daemon=True).start()
+        return ""
 
-    def launch(self) -> None:
+    def launch(self, radio: dict[str, Any]) -> None:
+        self.settings["last_radio"] = radio["name"]
+        save_settings(self.settings)
+        self.window.set_title(f"{APP} — {radio['name']}")
         self.window.load_html(
-            message_page("Démarrage de rigplane et connexion à la radio…")
+            message_page(f"Démarrage de rigplane et connexion à {_esc(radio['name'])}…")
         )
-        self.process = start_server(self.settings)
+        self.process = start_server(self.settings, radio)
         if not wait_until_ready(self.settings, self.process):
             log = (
                 Path(os.environ.get("LOCALAPPDATA", ""))
@@ -321,7 +575,8 @@ class App:
             self.window.load_html(
                 message_page(
                     "rigplane n'a pas démarré. Vérifiez qu'il ne tourne pas déjà "
-                    f"dans une autre fenêtre (port {self.settings['port']}).<br>"
+                    f"dans une autre fenêtre (port {self.settings['port']}) et, en "
+                    "USB, que le port COM est le bon.<br>"
                     f"Journal : {log}"
                 )
             )
@@ -350,8 +605,14 @@ def main() -> None:
     import webview
 
     app = App()
-    setup = "--setup" in sys.argv or needs_setup(app.settings)
-    first_page = setup_page(app.settings) if setup else message_page("Démarrage…")
+    page, radio = start_choice(app.settings)
+    if "--setup" in sys.argv:
+        page = "choose" if page != "setup" else "setup"
+    first_page = {
+        "setup": lambda: setup_page(app.settings),
+        "choose": lambda: choose_page(app.settings),
+        "launch": lambda: message_page("Démarrage…"),
+    }[page]()
     app.window = webview.create_window(
         APP,
         html=first_page,
@@ -365,7 +626,7 @@ def main() -> None:
     # saved choices (layout, tuning step, selected memory bank) on every
     # launch; keep them in a profile folder instead.
     webview.start(
-        None if setup else app.launch,
+        (lambda: app.launch(radio)) if page == "launch" and radio else None,
         private_mode=False,
         storage_path=str(SETTINGS_PATH.parent / "webview"),
     )
