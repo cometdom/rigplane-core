@@ -1,13 +1,11 @@
-"""com0com virtual COM port pairs (Windows), through its setupc.exe tool.
+"""com0com virtual COM port pairs (Windows).
 
-``setupc list`` prints one line per port, e.g.::
-
-    CNCA0 PortName=COM10
-    CNCB0 PortName=COM#,RealPortName=COM11
-
-Ports ``CNCAn``/``CNCBn`` with the same ``n`` form a pair. Installing a pair
-needs administrator rights, so :func:`create_pair` asks Windows for them
-(the UAC prompt) and waits for setupc to finish.
+setupc.exe needs administrator rights for every command, ``list`` included,
+so the pairs are read from the registry instead: ``HKLM\\HARDWARE\\DEVICEMAP\\
+SERIALCOMM`` maps each present port device to its COM name, and com0com
+names the two ports of pair ``n`` ``\\Device\\com0com1n`` and
+``\\Device\\com0com2n``. Only :func:`create_pair` runs setupc, through the
+Windows elevation prompt.
 """
 
 from __future__ import annotations
@@ -15,18 +13,21 @@ from __future__ import annotations
 import asyncio
 import os
 import re
+import sys
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 __all__ = [
     "create_pair",
     "find_setupc",
     "list_pairs",
-    "parse_setupc_list",
+    "pairs_from_serialcomm",
     "valid_port",
 ]
 
-_LINE = re.compile(r"^\s*CNC([AB])(\d+)\s+(\S+)", re.MULTILINE)
 _PORT = re.compile(r"^COM\d{1,3}$")
+_DEVICE = re.compile(r"^\\Device\\com0com([12])(\d+)$", re.IGNORECASE)
 
 
 def valid_port(name: str) -> bool:
@@ -42,14 +43,14 @@ def find_setupc() -> Path | None:
     return None
 
 
-def parse_setupc_list(output: str) -> list[dict[str, str]]:
-    """Pairs ``[{a, b}]`` of the port names Windows uses (RealPortName first)."""
+def pairs_from_serialcomm(values: Mapping[str, str]) -> list[dict[str, str]]:
+    """Pairs ``[{a, b}]`` from SERIALCOMM's device-name → COM-name values."""
     sides: dict[str, dict[str, str]] = {}
-    for side, number, params in _LINE.findall(output):
-        values = dict(part.split("=", 1) for part in params.split(",") if "=" in part)
-        name = values.get("RealPortName") or values.get("PortName") or ""
-        if valid_port(name):
-            sides.setdefault(number, {})[side.lower()] = name
+    for device, port in values.items():
+        match = _DEVICE.match(device)
+        if match and valid_port(port):
+            side = "a" if match.group(1) == "1" else "b"
+            sides.setdefault(match.group(2), {})[side] = port
     return [
         {"a": pair["a"], "b": pair["b"]}
         for _, pair in sorted(sides.items(), key=lambda item: int(item[0]))
@@ -57,23 +58,34 @@ def parse_setupc_list(output: str) -> list[dict[str, str]]:
     ]
 
 
-async def _run(setupc: Path, *args: str) -> str:
-    process = await asyncio.create_subprocess_exec(
-        str(setupc),
-        *args,
-        cwd=str(setupc.parent),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-    output, _ = await process.communicate()
-    return output.decode(errors="replace")
+def _read_serialcomm() -> dict[str, str]:
+    import winreg
+
+    reg: Any = winreg
+    values: dict[str, str] = {}
+    try:
+        key = reg.OpenKey(reg.HKEY_LOCAL_MACHINE, r"HARDWARE\DEVICEMAP\SERIALCOMM")
+    except OSError:
+        return values
+    with key:
+        index = 0
+        while True:
+            try:
+                name, value, _ = reg.EnumValue(key, index)
+            except OSError:
+                return values
+            if isinstance(name, str) and isinstance(value, str):
+                values[name] = value
+            index += 1
 
 
 async def list_pairs() -> list[dict[str, str]]:
-    setupc = find_setupc()
-    if setupc is None:
+    if sys.platform != "win32":
         return []
-    return parse_setupc_list(await _run(setupc, "list"))
+    try:
+        return pairs_from_serialcomm(await asyncio.to_thread(_read_serialcomm))
+    except OSError:
+        return []
 
 
 async def create_pair(a: str, b: str) -> int:

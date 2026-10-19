@@ -13,16 +13,6 @@ from rigplane.web.civ_com_bridge import CivBridgeManager
 from rigplane.web.server import WebConfig, WebServer
 
 
-def test_parse_setupc_list() -> None:
-    output = (
-        "       CNCA0 PortName=COM10\n"
-        "       CNCB0 PortName=COM#,RealPortName=COM11\n"
-        "       CNCA1 PortName=COM#,RealPortName=COM20\n"
-        "       CNCB1 PortName=-\n"
-    )
-    assert com0com.parse_setupc_list(output) == [{"a": "COM10", "b": "COM11"}]
-
-
 class _Writer:
     def __init__(self, peer: str) -> None:
         self.buffer = bytearray()
@@ -137,3 +127,13 @@ async def test_pair_creation_is_local_and_validated(
         "10.0.0.2",
     )
     assert remote.status == 403
+
+
+def test_pairs_from_the_serialcomm_registry_values() -> None:
+    values = {
+        r"\Device\com0com10": "COM10",
+        r"\Device\com0com20": "COM11",
+        r"\Device\com0com11": "COM20",  # its B side is absent
+        r"\Device\Serial0": "COM1",
+    }
+    assert com0com.pairs_from_serialcomm(values) == [{"a": "COM10", "b": "COM11"}]
