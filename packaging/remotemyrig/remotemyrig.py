@@ -359,7 +359,14 @@ def main() -> None:
         maximized=True,
     )
     app.window.events.closed += app.on_closed
-    webview.start(None if setup else app.launch)
+    # pywebview opens a private session by default, which forgets the UI's
+    # saved choices (layout, tuning step, selected memory bank) on every
+    # launch; keep them in a profile folder instead.
+    webview.start(
+        None if setup else app.launch,
+        private_mode=False,
+        storage_path=str(SETTINGS_PATH.parent / "webview"),
+    )
 
 
 if __name__ == "__main__":
