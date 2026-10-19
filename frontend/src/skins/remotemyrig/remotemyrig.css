@@ -131,3 +131,11 @@
 .remotemyrig-face .rmr-tx .ssb-tx-bw { padding: 2px 8px; }
 .remotemyrig-face .rmr-meter-flags { display: flex; justify-content: flex-end; min-height: 0; }
 .remotemyrig-face .rmr-tx-extras { display: flex; align-items: center; justify-content: space-between; }
+.remotemyrig-face .rmr-radio-name {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--v2-text-secondary, #9aa);
+}

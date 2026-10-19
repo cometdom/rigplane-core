@@ -894,7 +894,10 @@
     <RxMonitorRestore />
     <section class="receiver-deck rmr-grid" bind:this={receiverDeckElement} style={receiverDeckStyle}>
       <div class="rmr-top">
-        <div class="rmr-vfo">{@render instruments.vfo('standard', undefined, vfoOperationControls)}</div>
+        <div class="rmr-vfo">
+          {@render instruments.vfo('standard', undefined, vfoOperationControls)}
+          {#if runtime.caps?.model}<div class="rmr-radio-name" data-testid="rmr-radio-name">{runtime.caps.model}</div>{/if}
+        </div>
         <div class="rmr-meters">
           <div class="rmr-meter-flags"><OverflowIndicator /></div>
           {@render instruments.meters()}
