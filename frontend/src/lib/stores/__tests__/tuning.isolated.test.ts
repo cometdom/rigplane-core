@@ -191,3 +191,16 @@ describe('tuning step store — companion PUT is supervisor-gated (MOR-2242)', (
     expect(init.method).toBe('PUT');
   });
 });
+
+describe('tuning steps for FM/AM channel spacing', () => {
+  it('TS+ walks 5 → 6.25 → 9 → 10 → 12.5 → 25 kHz', () => {
+    tuning.setTuningStep(5_000);
+    const walked = [1, 2, 3, 4, 5].map(() => tuning.adjustTuningStep('up'));
+    expect(walked).toEqual([6_250, 9_000, 10_000, 12_500, 25_000]);
+  });
+
+  it('formats the fractional steps', () => {
+    expect(tuning.formatStep(6_250)).toBe('6.25kHz');
+    expect(tuning.formatStep(12_500)).toBe('12.5kHz');
+  });
+});
