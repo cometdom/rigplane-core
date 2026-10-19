@@ -124,6 +124,8 @@ from .handlers import (  # noqa: TID251
     ScopeHandler,
 )
 from .handlers.audio import browser_tx_audio_facts  # noqa: TID251
+from .handlers.rc28 import Rc28Handler  # noqa: TID251
+from .rc28 import Rc28Bridge  # noqa: TID251
 from .handlers.control import _consume_normalized_level_unit  # noqa: TID251
 from .host_guard import (  # noqa: TID251
     MISDIRECTED_BODY,
@@ -1153,6 +1155,7 @@ class WebServer:
             on_client_count_change=self._broadcast_ws_client_state_update,
             adaptive_egress=self._config.audio_adaptive_egress,
         )
+        self._rc28 = Rc28Bridge()
         self._hardware_scope_available = _supports_scope(radio)
         # Gated WebRTC transport session manager (A2.3 / MOR-307). Lazily
         # constructed on first use so the import stays out of the no-extra path.
@@ -3630,6 +3633,7 @@ class WebServer:
         self._attach_audio_session_listener()
         self._attach_reconnect_status_listener()
         await start_web_server(self)
+        self._rc28.start()
         deferred_bridge = self._deferred_bridge_start
         if deferred_bridge is not None:
             # MOR-3078: the CLI armed a deferred auto-start while the
@@ -3818,6 +3822,7 @@ class WebServer:
         self._detach_audio_session_listener()
         self._detach_reconnect_status_listener()
         self._stop_sdr_scope()
+        await self._rc28.stop()
         await stop_web_server(self)
 
     async def serve_forever(
@@ -4718,6 +4723,10 @@ class WebServer:
             )
             return
         caps = self._projected_runtime_capabilities()
+        rc28 = getattr(self, "_rc28", None)
+        if rc28 is not None and rc28.status()["available"]:
+            # The hidapi module is installed: the /api/v1/rc28 channel works.
+            caps = {*caps, "rc28"}
         tx_audio = browser_tx_audio_facts(self._radio)
         _raw_model = (
             getattr(self._radio, "model", None) if self._radio is not None else None
@@ -7703,6 +7712,8 @@ class WebServer:
                 await ws.close(1008, "audio FFT scope not available")
                 return
             handler = ScopeHandler(ws, self._radio, server=self, audio_mode=True)
+        elif path == "/api/v1/rc28":
+            handler = Rc28Handler(ws, self._rc28)
         elif path == "/api/v1/audio":
             audio_source = object()
             handler = AudioHandler(

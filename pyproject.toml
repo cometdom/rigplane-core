@@ -56,6 +56,8 @@ scope = [
 dsp = ["scipy>=1.11"]
 webrtc = ["aiortc>=1.9"]
 tls = ["cryptography>=41.0"]
+# ICOM RC-28 remote encoder over USB HID (web/rc28.py).
+rc28 = ["hidapi>=0.14"]
 # SoapySDR Python bindings have no official PyPI wheel — they come from the
 # system (`python3-soapysdr` on Debian/Raspberry Pi OS) or a SoapySDR build.
 # The extra is a feature marker for the SDR IQ source; it adds no packages
