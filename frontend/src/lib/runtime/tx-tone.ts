@@ -2,10 +2,15 @@
  * Repeater access tone burst (1750 Hz). The tone rides the browser TX audio
  * path, so it needs a transmit keyed through the on-screen PTT gate.
  */
-export { sendTxTone } from '$lib/transport/tx-tone-client';
+export { sendTxTone, stopTxTone } from '$lib/transport/tx-tone-client';
 
 export const TONE_BURST_HZ = 1750;
-export const TONE_BURST_MS = 1000;
+/** A click sends at least this much tone; holding the key sends more. */
+export const TONE_BURST_MIN_MS = 1000;
+/** Longest tone one press can send. */
+export const TONE_BURST_MAX_MS = 3000;
+/** Kept in TX after the tone so the radio plays out its audio buffer. */
+export const TONE_BURST_TAIL_MS = 300;
 
 interface TxSnapshot {
   readonly fresh: boolean;

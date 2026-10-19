@@ -5634,6 +5634,10 @@ class WebServer:
         payload = await self._read_json_object(writer, headers, reader)
         if payload is None:
             return
+        if payload == {"stop": True}:
+            self._tx_tone.stop()
+            await self._send_json(writer, 200, "OK", {"stopped": True})
+            return
         hz, ms = payload.get("hz"), payload.get("ms")
         try:
             if (

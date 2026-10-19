@@ -106,6 +106,8 @@ async def test_tx_tone_route(tmp_path: object) -> None:
     server = WebServer(None, WebConfig(host="127.0.0.1", port=0, radio_model="IC-9700"))
     assert await post(server, {"hz": 1750, "ms": 1000}) == 200
     assert server._tx_tone.render(96, 48_000) is not None  # noqa: SLF001
+    assert await post(server, {"stop": True}) == 200
+    assert server._tx_tone.render(96, 48_000) is None  # noqa: SLF001
     assert await post(server, {"hz": 1750}) == 400
     assert await post(server, {"hz": 50, "ms": 1000}) == 400
     read_only = WebServer(
@@ -113,3 +115,11 @@ async def test_tx_tone_route(tmp_path: object) -> None:
         WebConfig(host="127.0.0.1", port=0, radio_model="IC-9700", read_only=True),
     )
     assert await post(read_only, {"hz": 1750, "ms": 1000}) == 403
+
+
+def test_stop_ends_the_burst_early() -> None:
+    tone = TxTone(clock=lambda: 0.0)
+    tone.start(1750, 3.0)
+    assert tone.render(96, 48_000) is not None
+    tone.stop()
+    assert tone.render(96, 48_000) is None
