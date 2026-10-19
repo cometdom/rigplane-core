@@ -18,11 +18,12 @@ const MODE_DEFAULTS: Record<string, number> = {
   'RTTY':   100,
   'RTTY-R': 100,
   'AM':     1_000,
-  'FM':     25_000,
-  // SSB and everything else → 1kHz
+  // 12.5 kHz: the IC-9700's own FM step and RS-BA1's.
+  'FM':     12_500,
+  // SSB and everything else → 10 Hz
 };
 
-const DEFAULT_STEP = 1_000;
+const DEFAULT_STEP = 10;
 
 function _storage(): Storage | null {
   return typeof globalThis.localStorage?.getItem === 'function' ? globalThis.localStorage : null;

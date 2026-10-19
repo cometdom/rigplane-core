@@ -87,10 +87,10 @@ describe('tuning step store — companion override vs. mode-driven auto-step (MO
 
   it('auto-step still tracks mode when the operator never overrode the step at all', () => {
     expect(tuning.isAutoStep()).toBe(true);
-    tuning.applyModeDefault('CW');
-    expect(tuning.getTuningStep()).toBe(10);
+    tuning.applyModeDefault('FM');
+    expect(tuning.getTuningStep()).toBe(12_500);
     tuning.applyModeDefault('USB');
-    expect(tuning.getTuningStep()).toBe(1_000);
+    expect(tuning.getTuningStep()).toBe(10);
   });
 
   it('a companion echo matching the already-current step is a no-op, no spurious auto-step disable', () => {
@@ -131,7 +131,7 @@ describe('tuning step store — setAutoStep(true) re-enable semantics (MOR-1486)
   it('re-enabling auto-step reads the SUB receiver mode when SUB is active', () => {
     radio.current = { active: 'SUB', main: { mode: 'USB' }, sub: { mode: 'FM' } } as any;
     tuning.setAutoStep(true);
-    expect(tuning.getTuningStep()).toBe(25_000);
+    expect(tuning.getTuningStep()).toBe(12_500);
   });
 
   it('a manual step change followed by re-enable is a full round trip back to mode-follow', () => {
