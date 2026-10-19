@@ -83,3 +83,24 @@ def test_s_meter_is_calibrated() -> None:
         for p in profile.meter_calibrations["s_meter"]
     ]
     assert points == [(0, -54.0, "S0"), (120, 0.0, "S9"), (241, 60.0, "S9+60")]
+
+
+@pytest.mark.parametrize(
+    ("meter", "expected"),
+    [
+        ("power", [(0, 0.0, "0%"), (143, 50.0, "50%"), (213, 100.0, "100%")]),
+        ("alc", [(0, 0.0, "0"), (120, 100.0, "100")]),
+        ("comp", [(0, 0.0, "0"), (130, 15.0, "15"), (210, 25.5, "25.5")]),
+        ("vd", [(0, 0.0, "0"), (13, 10.0, "10"), (241, 16.0, "16")]),
+        ("id", [(0, 0.0, "0"), (121, 10.0, "10"), (241, 20.0, "20")]),
+    ],
+)
+def test_tx_meters_follow_the_guide(
+    meter: str, expected: list[tuple[int, float, str]]
+) -> None:
+    profile = resolve_radio_profile(model="IC-9700")
+    assert profile.meter_calibrations is not None
+    points = [
+        (p["raw"], p["actual"], p["label"]) for p in profile.meter_calibrations[meter]
+    ]
+    assert points == expected

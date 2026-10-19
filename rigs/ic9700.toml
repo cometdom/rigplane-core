@@ -1168,6 +1168,83 @@ raw = 241
 actual = 60.0
 label = "S9+60"
 
+# TX telemetry calibration. IC-9700 CI-V Reference Guide, command 15:
+#   11 Po:   0000=0%, 0143=50%, 0213=100% -- a share of full power, labelled
+#            in %, because full power differs by band (100/75/10 W).
+#   13 ALC:  0000=minimum, 0120=maximum
+#   14 COMP: 0000=0 dB, 0130=15 dB, 0210=25.5 dB
+#   15 Vd:   0000=0 V, 0013=10 V, 0241=16 V
+#   16 Id:   0000=0 A, 0121=10 A, 0241=20 A
+[[meters.power.calibration]]
+raw = 0
+actual = 0.0
+label = "0%"
+
+[[meters.power.calibration]]
+raw = 143
+actual = 50.0
+label = "50%"
+
+[[meters.power.calibration]]
+raw = 213
+actual = 100.0
+label = "100%"
+
+[[meters.alc.calibration]]
+raw = 0
+actual = 0.0
+label = "0"
+
+[[meters.alc.calibration]]
+raw = 120
+actual = 100.0
+label = "100"
+
+[[meters.comp.calibration]]
+raw = 0
+actual = 0.0
+label = "0"
+
+[[meters.comp.calibration]]
+raw = 130
+actual = 15.0
+label = "15"
+
+[[meters.comp.calibration]]
+raw = 210
+actual = 25.5
+label = "25.5"
+
+[[meters.vd.calibration]]
+raw = 0
+actual = 0.0
+label = "0"
+
+[[meters.vd.calibration]]
+raw = 13
+actual = 10.0
+label = "10"
+
+[[meters.vd.calibration]]
+raw = 241
+actual = 16.0
+label = "16"
+
+[[meters.id.calibration]]
+raw = 0
+actual = 0.0
+label = "0"
+
+[[meters.id.calibration]]
+raw = 121
+actual = 10.0
+label = "10"
+
+[[meters.id.calibration]]
+raw = 241
+actual = 20.0
+label = "20"
+
 # SWR meter calibration — piecewise-linear lookup from raw 0–255 to SWR ratio.
 # First four points (0=1.0, 48=1.5, 80=2.0, 120=3.0) match the firmware-anchored
 # Icom curve documented for sibling models. Fifth point (240, 6.0) follows

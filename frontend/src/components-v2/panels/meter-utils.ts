@@ -164,6 +164,9 @@ export function formatPowerWatts(value: number, domain?: MeterValueDomain): stri
   const cal = getCal('power');
   if (!cal && domain === undefined) return '';
   const watts = Math.max(0, cal ? Math.min(topActual(cal), value) : value);
+  // A table whose top knot is labelled in % publishes a share of full
+  // power, not watts (rigs/ic9700.toml [meters.power]).
+  if (cal && cal[cal.length - 1].label.endsWith('%')) return `${Math.round(watts)}%`;
   return `${Math.round(watts)}W`;
 }
 

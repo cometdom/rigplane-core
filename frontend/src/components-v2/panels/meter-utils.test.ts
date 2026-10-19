@@ -177,6 +177,29 @@ describe('formatPowerWatts (calibrated: input is watts)', () => {
   });
 });
 
+describe('formatPowerWatts (table labelled in %: IC-9700 Po)', () => {
+  beforeEach(() => {
+    setCapabilities(makeCaps({
+      meterCalibrations: {
+        power: [
+          { raw: 0, actual: 0, label: '0%' },
+          { raw: 143, actual: 50, label: '50%' },
+          { raw: 213, actual: 100, label: '100%' },
+        ],
+      },
+    }));
+  });
+
+  it('renders the share of full power, not watts', () => {
+    expect(formatPowerWatts(50)).toBe('50%');
+    expect(formatPowerWatts(140)).toBe('100%');
+  });
+
+  it('keeps the bar on the same 0–100 scale', () => {
+    expect(normalizePower(50)).toBeCloseTo(0.5);
+  });
+});
+
 describe('normalizePower (calibrated: watts / top knot)', () => {
   it('returns 0 for 0 W', () => {
     expect(normalizePower(0)).toBe(0);
