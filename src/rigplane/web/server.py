@@ -125,6 +125,11 @@ from .handlers import (  # noqa: TID251
 )
 from .handlers.audio import browser_tx_audio_facts  # noqa: TID251
 from .handlers.rc28 import Rc28Handler  # noqa: TID251
+from .memory_bank import (  # noqa: TID251
+    MemoryBankStore,
+    default_store_path,
+    parse_icom_csv,
+)
 from .rc28 import Rc28Bridge  # noqa: TID251
 from .handlers.control import _consume_normalized_level_unit  # noqa: TID251
 from .host_guard import (  # noqa: TID251
@@ -1159,6 +1164,7 @@ class WebServer:
             adaptive_egress=self._config.audio_adaptive_egress,
         )
         self._rc28 = Rc28Bridge()
+        self._memory_banks = MemoryBankStore(default_store_path())
         self._request_shutdown: Callable[[], None] | None = None
         self._hardware_scope_available = _supports_scope(radio)
         # Gated WebRTC transport session manager (A2.3 / MOR-307). Lazily
@@ -5505,6 +5511,109 @@ class WebServer:
                 "message": "Managed transmit authority unavailable",
             },
         )
+
+    async def _handle_http_memory_banks(
+        self,
+        method: str,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """GET the imported banks; POST ``{name, csv}`` imports an Icom CSV."""
+        if method == "GET":
+            await self._send_json(
+                writer, 200, "OK", {"banks": self._memory_banks.load()}
+            )
+            return
+        if self._config.read_only:
+            await self._send_json(writer, 403, "Forbidden", {"error": "read_only"})
+            return
+        payload = await self._read_json_object(writer, headers, reader)
+        if payload is None:
+            return
+        name, text = payload.get("name"), payload.get("csv")
+        if not isinstance(name, str) or not name.strip() or not isinstance(text, str):
+            await self._send_json(
+                writer, 400, "Bad Request", {"error": "expected {name, csv}"}
+            )
+            return
+        try:
+            channels = parse_icom_csv(text)
+        except ValueError as exc:
+            await self._send_json(writer, 400, "Bad Request", {"error": str(exc)})
+            return
+        if not channels:
+            await self._send_json(
+                writer, 400, "Bad Request", {"error": "no channel in the file"}
+            )
+            return
+        await asyncio.to_thread(self._memory_banks.save, name.strip(), channels)
+        await self._send_json(
+            writer, 200, "OK", {"name": name.strip(), "count": len(channels)}
+        )
+
+    async def _handle_http_memory_bank_delete(
+        self,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """POST ``{name}``: forget one imported bank."""
+        if self._config.read_only:
+            await self._send_json(writer, 403, "Forbidden", {"error": "read_only"})
+            return
+        payload = await self._read_json_object(writer, headers, reader)
+        if payload is None:
+            return
+        name = payload.get("name")
+        if not isinstance(name, str):
+            await self._send_json(
+                writer, 400, "Bad Request", {"error": "expected {name}"}
+            )
+            return
+        found = await asyncio.to_thread(self._memory_banks.delete, name)
+        status, reason = (200, "OK") if found else (404, "Not Found")
+        await self._send_json(writer, status, reason, {"deleted": found})
+
+    async def _handle_http_duplex_offset(
+        self,
+        method: str,
+        writer: asyncio.StreamWriter,
+        headers: dict[str, str] | None = None,
+        reader: asyncio.StreamReader | None = None,
+    ) -> None:
+        """GET/PUT the radio's duplex (repeater) offset in Hz."""
+        radio = self._radio
+        if radio is None or not callable(getattr(radio, "set_duplex_offset", None)):
+            await self._send_json(
+                writer, 503, "Service Unavailable", {"error": "not_supported"}
+            )
+            return
+        try:
+            if method == "GET":
+                hz = await radio.get_duplex_offset()
+                await self._send_json(writer, 200, "OK", {"hz": hz})
+                return
+            if self._config.read_only:
+                await self._send_json(writer, 403, "Forbidden", {"error": "read_only"})
+                return
+            payload = await self._read_json_object(writer, headers, reader)
+            if payload is None:
+                return
+            hz = payload.get("hz")
+            if set(payload) != {"hz"} or type(hz) is not int:
+                await self._send_json(
+                    writer, 400, "Bad Request", {"error": "expected {hz: int}"}
+                )
+                return
+            await radio.set_duplex_offset(hz)
+        except ValueError as exc:
+            await self._send_json(writer, 400, "Bad Request", {"error": str(exc)})
+            return
+        except (RigplaneError, TimeoutError, ConnectionError) as exc:
+            await self._send_json(writer, 502, "Bad Gateway", {"error": str(exc)})
+            return
+        await self._send_json(writer, 200, "OK", {"hz": hz})
 
     async def _handle_http_app_shutdown(self, writer: asyncio.StreamWriter) -> None:
         """POST: stop the server as Ctrl+C would (loopback, opt-in only)."""

@@ -524,6 +524,27 @@ async def _dispatch_http_routes(
         await server._handle_http_managed_tx(path, writer, headers, reader)
         return
 
+    if path == "/api/v1/memory-banks":
+        if method not in ("GET", "POST"):
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_memory_banks(method, writer, headers, reader)
+        return
+
+    if path == "/api/v1/memory-banks/delete":
+        if method != "POST":
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_memory_bank_delete(writer, headers, reader)
+        return
+
+    if path == "/api/v1/radio/duplex-offset":
+        if method not in ("GET", "PUT"):
+            await _send_response(writer, 405, "Method Not Allowed", b"", {})
+            return
+        await server._handle_http_duplex_offset(method, writer, headers, reader)
+        return
+
     if path == "/api/v1/app/shutdown":
         if method != "POST":
             await _send_response(writer, 405, "Method Not Allowed", b"", {})
