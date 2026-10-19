@@ -2323,12 +2323,6 @@ _TX_TARGET_PATH = FieldPath.global_("tx_state", "tx_target")
 #: oversight: the guard below fails for any TX/tuner profile that is neither
 #: sourced nor listed here.
 _TX_TARGET_UNSUPPORTED: dict[str, str] = {
-    "IC-9700": (
-        "taken out of MOR-2540 round 2: its band-selection and split "
-        "semantics are unverified and no IC-9700 is on the bench, so no "
-        "receiver-labelling rule is declared for it; MOR-2567 covers its "
-        "other data problems"
-    ),
     "TX-500": (
         "kenwood_cat profile with no backend (backends/factory.py has no "
         "TX-500 route); no TX-target read is wired for the Lab599 CAT set"

@@ -152,6 +152,9 @@ polling_only = [
     "global.operator_controls.ssb_tx_bandwidth",
     # OVF indicator (15 07), read by the same query as the legacy mirror.
     "global.slow_state.overflow",
+    # Transmit frequency: IC-9700 CI-V Reference Guide 1C 03 ("Read the
+    # transmit frequency"), polled on get_tx_target below.
+    "global.tx_state.tx_target",
     # RemoteMyRig: every control below has a read row in the IC-9700 CI-V
     # Reference Guide; without a read the UI keeps the control disabled.
     "receiver.main.active.freq_mode.filter_width",
@@ -228,6 +231,12 @@ supported_controls = [
 # meter cadence class (tests/test_state_acquisition_policy.py) binds them to
 # <=0.4s: 0.2s/2.0s only ever fires while the key is down. The S-meter
 # stays the unconditional RX meter.
+[state_acquisition.field_policies."global.tx_state.tx_target"]
+reason = "same policy as rigs/ic7610.toml: TUNE fails closed while tx_target is not FRESH"
+cadence_seconds = 1.0
+freshness_ttl_seconds = 4.0
+adaptive_decay = false
+
 [state_acquisition.field_policies."global.meters.power"]
 cadence_seconds = 0.2
 freshness_ttl_seconds = 2.0
@@ -523,6 +532,9 @@ fixed = true
 scheme = "main_sub"
 main_select = [0xD0]
 sub_select = [0xD1]
+# The 1C 03 transmit-frequency reply (get_tx_target) carries no receiver; as
+# on the IC-7610 the target is MAIN, or SUB while a FRESH split reads ON.
+tx_receiver_rule = "main_unless_split"
 swap_main_sub = [0xB0]
 equal_main_sub = [0xB1]
 
@@ -786,6 +798,7 @@ get_repeater_shift = [0x0F]  # source: IC-9700 CI-V Reference Guide, command 0F
 get_duplex_offset = [0x0C]
 set_duplex_offset = [0x0D]
 set_repeater_shift = [0x0F]  # source: IC-9700 CI-V Reference Guide, command 0F
+get_tx_target = [0x1C, 0x03]  # source: IC-9700 CI-V Reference Guide, command 1C 03
 get_xfc_status = [0x1C, 0x02]             # XFC = transmit frequency monitor
 set_xfc_status = [0x1C, 0x02]
 
