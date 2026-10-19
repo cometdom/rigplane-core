@@ -129,3 +129,4 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .remotemyrig-face .rmr-tx .ssb-tx-bw { padding: 2px 8px; }
+.remotemyrig-face .rmr-meter-flags { display: flex; justify-content: flex-end; min-height: 0; }

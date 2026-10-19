@@ -104,3 +104,9 @@ def test_tx_meters_follow_the_guide(
         (p["raw"], p["actual"], p["label"]) for p in profile.meter_calibrations[meter]
     ]
     assert points == expected
+
+
+def test_overflow_status_is_polled() -> None:
+    # IC-9700 CI-V Reference Guide, 15 07: Read the OVF status (00 off, 01 on).
+    queries = build_state_queries(resolve_radio_profile(model="IC-9700"))
+    assert acquisition_query(0x15, sub=0x07) in queries

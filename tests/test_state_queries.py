@@ -751,8 +751,8 @@ class TestBuildStateQueries:
         # semantics, no bench radio): no 1C 03 read is declared for it.
         # repeater_shift rides the same 0F query as split, so one path has no
         # query of its own.
-        assert len(pollable) == 64
-        assert len(queries) == 63
+        assert len(pollable) == 65
+        assert len(queries) == 64
         assert all(query.receiver is None for query in queries)
         assert not any(
             query.command in {0x25, 0x26} and query.data == b"\x01" for query in queries

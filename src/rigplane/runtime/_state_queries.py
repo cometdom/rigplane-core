@@ -252,7 +252,10 @@ def acquisition_query_resolver_for_profile(
         if family == "meters":
             getter = _GLOBAL_METER_GETTERS.get(path.name)
         elif family == "slow_state":
-            getter = "get_main_sub_band" if path.name == "active" else None
+            getter = {
+                "active": "get_main_sub_band",
+                "overflow": "get_overflow_status",
+            }.get(path.name)
         elif family == "tx_state":
             getter = _GLOBAL_TX_STATE_GETTERS.get(path.name)
         elif family == "operator_controls":

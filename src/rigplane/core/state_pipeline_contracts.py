@@ -1537,6 +1537,8 @@ def _global_specs() -> tuple[FieldSpec, ...]:
         ),
         spec(FieldPath.global_("slow_state", "active"), "str"),
         spec(FieldPath.global_("slow_state", "cw_spot"), "bool"),
+        # Receiver overload (OVF) indicator, CI-V 15 07: read-only.
+        spec(FieldPath.global_("slow_state", "overflow"), "bool"),
         *(
             spec(FieldPath.global_("slow_state", name), value_type, writable=True)
             for name, value_type in (

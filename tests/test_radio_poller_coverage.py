@@ -1603,7 +1603,7 @@ async def test_scheduler_unknown_query_mapping_is_recorded_and_failed() -> None:
     # re-queues it, so cycle 2 sends (and fails) it again — the count pins
     # "failed and re-queued", not "failed exactly once".
     radio = _make_radio(active="MAIN")
-    path = FieldPath.global_("slow_state", "overflow")
+    path = FieldPath.global_("slow_state", "scanning")
     scheduler = AcquisitionScheduler(profile=_acquisition_profile(path))
     radio._acquisition_scheduler = scheduler
     diagnostics = []

@@ -4880,6 +4880,16 @@ def test_update_radio_state_cmd16_ssb_tx_bandwidth_observation_backed(
     assert field.value == 2
 
 
+def test_overflow_reply_reaches_the_state_store(
+    radio_with_state: IcomRadio,
+) -> None:
+    """cmd 0x15/0x07 (OVF indicator) is observed as global.slow_state.overflow."""
+    frame = _make_frame(cmd=0x15, sub=0x07, data=b"\x01")
+    radio_with_state._civ_runtime._update_state_cache_from_frame(frame)
+    field = radio_with_state._state_store.snapshot().field("global.slow_state.overflow")
+    assert field.value is True
+
+
 def test_update_radio_state_cmd16_twin_peak_filter_observation_backed(
     radio_with_state: IcomRadio,
 ) -> None:

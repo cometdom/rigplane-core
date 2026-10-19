@@ -2639,6 +2639,15 @@ class CivRuntime:
                             frame=frame,
                         )
                     )
+        elif frame.command == 0x15 and frame.sub == 0x07 and frame.data:
+            # OVF (receiver overload) indicator: single-byte bool.
+            observations.append(
+                self._observation(
+                    FieldPath.global_("slow_state", "overflow"),
+                    bool(frame.data[0]),
+                    frame=frame,
+                )
+            )
         elif (
             frame.command == 0x15
             and frame.sub in _OBSERVABLE_CMD15_SQL_OPEN_SUBS

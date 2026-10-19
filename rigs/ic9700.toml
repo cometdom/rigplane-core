@@ -150,6 +150,8 @@ polling_only = [
     # Read by the same 0F query as split.
     "receiver.main.operator_controls.repeater_shift",
     "global.operator_controls.ssb_tx_bandwidth",
+    # OVF indicator (15 07), read by the same query as the legacy mirror.
+    "global.slow_state.overflow",
     # RemoteMyRig: every control below has a read row in the IC-9700 CI-V
     # Reference Guide; without a read the UI keeps the control disabled.
     "receiver.main.active.freq_mode.filter_width",

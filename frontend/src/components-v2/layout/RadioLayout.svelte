@@ -44,6 +44,7 @@
   import { getManagedAppTxController } from '$lib/runtime/tx-controller/managed-app-host';
   import KeyboardHandler from './KeyboardHandler.svelte';
   import SsbTxBandwidthControl from '../wiring/SsbTxBandwidthControl.svelte';
+  import OverflowIndicator from '../wiring/OverflowIndicator.svelte';
   import type { BandInstrumentHandles } from '../../semantic/band-instruments';
   import StatusBar from './StatusBar.svelte';
   import MetersDockPanel from '../panels/MetersDockPanel.svelte';
@@ -889,7 +890,10 @@
     <section class="receiver-deck rmr-grid" bind:this={receiverDeckElement} style={receiverDeckStyle}>
       <div class="rmr-top">
         <div class="rmr-vfo">{@render instruments.vfo('standard', undefined, vfoOperationControls)}</div>
-        <div class="rmr-meters">{@render instruments.meters()}</div>
+        <div class="rmr-meters">
+          <div class="rmr-meter-flags"><OverflowIndicator /></div>
+          {@render instruments.meters()}
+        </div>
       </div>
 
       <div class="rmr-mode">

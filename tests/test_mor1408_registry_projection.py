@@ -267,7 +267,6 @@ def test_yaesu_ui_capabilities_overflow_and_transport_metadata_are_not_registere
         "vfo_select",
         "yaesu",
         "ui_capabilities",
-        "overflow",
         "ws_clients",
         "public_state_seq",
         "transport_seq",
