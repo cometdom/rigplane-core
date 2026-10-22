@@ -249,9 +249,7 @@ async def test_http_attenuator_command_reaches_wire_and_public_readback(
 
         radio._civ_runtime.start_pump()
         transport.queue_response(
-            wrap_civ_in_udp(
-                b"\xfe\xfe\xe0" + address + b"\x11" + wire_value + b"\xfd"
-            )
+            wrap_civ_in_udp(b"\xfe\xfe\xe0" + address + b"\x11" + wire_value + b"\xfd")
         )
         async with asyncio.timeout(5.0):
             while (await get_payload("/api/v1/state"))["main"]["att"] != db:
