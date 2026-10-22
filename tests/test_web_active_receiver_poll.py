@@ -49,6 +49,14 @@ async def test_cold_poll_enables_web_mode_filter_and_readback(model: str) -> Non
             timeout=aiohttp.ClientTimeout(total=15),
             headers={"X-RigPlane-Controller": client.key},
         ) as session:
+            await _wait_until(
+                lambda: (
+                    stack.radio.state_store.snapshot()
+                    .field("global.slow_state.active")
+                    .freshness
+                    is FreshnessState.FRESH
+                )
+            )
             cold = await _get(session, base, "/api/v1/state")
             assert cold["active"] == "MAIN"
             assert cold["fieldStatus"]["active"]["observed"] is True
