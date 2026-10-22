@@ -11,6 +11,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from _helpers import wrap_civ_in_udp
+from test_radio import MockTransport
+
 from rigplane.core.exceptions import CommandRejectedError
 from rigplane.core.state_pipeline_contracts import (
     CommandIntent,
@@ -19,10 +22,12 @@ from rigplane.core.state_pipeline_contracts import (
     SourceMetadata,
 )
 from rigplane.profiles import resolve_radio_profile
+from rigplane.runtime.radio import IcomRadio
 from rigplane.web import server as web_server
 from rigplane.web.radio_poller import (
     CommandQueue,
     CommandQueueEntry,
+    RadioPoller,
     SendCiv,
     SetFreq,
     SetMode,
@@ -189,6 +194,74 @@ async def test_http_command_enqueues_single_structured_command() -> None:
         "result": {"freq": 144_030_000, "receiver": 0},
     }
     assert captured == [SetFreq(144_030_000, receiver=0)]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("model", "db", "wire_value"),
+    [("IC-9700", 10, b"\x10"), ("IC-7300", 20, b"\x20")],
+)
+async def test_http_attenuator_command_reaches_wire_and_public_readback(
+    model: str, db: int, wire_value: bytes
+) -> None:
+    transport = MockTransport()
+    radio = IcomRadio("192.0.2.1", model=model, timeout=2.0)
+    radio._civ_transport = transport
+    radio._ctrl_transport = transport
+    radio._connected = True
+    srv = WebServer(radio, WebConfig(host="127.0.0.1", port=0))
+    poller = RadioPoller(radio, srv.command_queue, state_store=srv.command_state_store)
+
+    async def get_payload(path: str) -> dict:
+        writer = _FakeWriter()
+        await srv._handle_http(writer, "GET", path, headers={})
+        assert writer.response_status == 200
+        return writer.response_body
+
+    async def execute_queued_command() -> None:
+        await srv.command_queue.wait(timeout=5.0)
+        entry = srv.command_queue.take_entry()
+        assert entry is not None
+        await poller._execute_queued_entry(entry)
+
+    consumer = None
+    try:
+        capabilities = await get_payload("/api/v1/capabilities")
+        assert capabilities["attValues"] == [0, db]
+        assert (await get_payload("/api/v1/state"))["main"]["att"] is None
+
+        consumer = asyncio.create_task(execute_queued_command())
+        writer = await asyncio.wait_for(
+            _post_json(
+                srv,
+                "/api/v1/commands",
+                {"id": "att-on", "name": "set_att", "params": {"db": db}},
+            ),
+            timeout=5.0,
+        )
+        await asyncio.wait_for(consumer, timeout=5.0)
+        assert writer.response_status == 200
+        assert writer.response_body["ok"] is True
+        address = bytes([radio.profile.civ_addr])
+        command = b"\xfe\xfe" + address + b"\xe0\x11" + wire_value + b"\xfd"
+        assert any(packet.endswith(command) for packet in transport.sent_packets)
+        assert (await get_payload("/api/v1/state"))["main"]["att"] is None
+
+        radio._civ_runtime.start_pump()
+        transport.queue_response(
+            wrap_civ_in_udp(
+                b"\xfe\xfe\xe0" + address + b"\x11" + wire_value + b"\xfd"
+            )
+        )
+        async with asyncio.timeout(5.0):
+            while (await get_payload("/api/v1/state"))["main"]["att"] != db:
+                await asyncio.sleep(0)
+        assert (await get_payload("/api/v1/state"))["main"]["att"] == db
+    finally:
+        if consumer is not None:
+            consumer.cancel()
+            await asyncio.gather(consumer, return_exceptions=True)
+        await radio._force_cleanup_civ()
 
 
 @pytest.mark.asyncio
