@@ -230,9 +230,8 @@ available_when = [
 # ── Parameterized Capabilities ───────────────────────────────────
 
 [attenuator]
-# CI-V 0x11: binary toggle only
-# 0x00=OFF, 0x20=20dB ON
-values = [0, 20]
+# CI-V 0x11: IC-9700 CI-V Reference Guide p.4 -- "00" OFF, "10" 10 dB.
+values = [0, 10]
 
 [preamp]
 # CI-V 0x16 0x02: IC-9700 CI-V Reference Guide p.5 -- 00 both OFF, 01 P.AMP ON,
@@ -335,11 +334,24 @@ width_max = 255
 [power]
 max_watts = 100
 
+# ── Memory channels (MOR-3627) ───────────────────────────────────
+# CI-V 1A 00 reads a channel by band code (01 144, 02 430 MHz, 03 1.2 GHz) and
+# channel 0001-0099 (guide p.14); scan edges, call channels and satellite
+# memories are not listed. No recording of this model exists (tier B-).
+[memory]
+addressing = "band_channel"
+first_group = 1
+last_group = 3
+first_channel = 1
+last_channel = 99
+
 [ctcss]
 table = "standard_50"
 
 [modes]
 list = ["USB", "LSB", "CW", "CW-R", "AM", "FM", "RTTY", "RTTY-R"]
+# MOR-3679: the CW modes, named once here for every client.
+families = { cw = ["CW", "CW-R"] }
 
 [data_mode]
 # CI-V 0x1A 0x06: DATA sub-mode (0=OFF, 1=DATA1)
