@@ -24,7 +24,7 @@ def test_shipped_profiles_declare_memory_addressing_and_capability() -> None:
     assert ic705.memory.dd_groups == ()
     # The capability is declared together with the reader (list API PR).
     for profile in (ic705, ic9700):
-        assert "memory_read" not in profile.capabilities
+        assert "memory_read" in profile.capabilities
     # Radios without a [memory] section stay without the listing.
     for model in ("IC-7300", "IC-7610"):
         profile = get_radio_profile(model)
