@@ -43,6 +43,7 @@ from typing import Any, AsyncIterator, Callable
 
 import aiohttp
 
+from rigplane.profiles import resolve_radio_profile
 from rigplane.rigctld.contract import RigctldConfig
 from rigplane.rigctld.server import RigctldServer
 from rigplane.runtime.controller_authority import ControllerAuthority
@@ -1176,7 +1177,14 @@ class _SimulatorStack:
             self.config_dir.cleanup()
 
 
-async def _start_simulator_stack(managed_tx: bool = False) -> _SimulatorStack:
+async def _start_simulator_stack(
+    managed_tx: bool = False,
+    *,
+    model: str = "IC-7610",
+    dual_receiver: bool = False,
+    enable_audio: bool = True,
+    capture_civ_frames: bool = False,
+) -> _SimulatorStack:
     """The `rigplane web` stack against the simulator.
 
     By default managed TX composition is absent, so the RigctldServer takes
@@ -1186,13 +1194,19 @@ async def _start_simulator_stack(managed_tx: bool = False) -> _SimulatorStack:
     PTT, and the composition's config file lives in a temporary directory
     the stack removes on close, so the soak never touches the user's config.
     """
+    profile = resolve_radio_profile(model=model)
     sim = MockIcomRadio(
+        radio_addr=profile.civ_addr,
         single_owner=True,
         unsolicited_civ=True,
         unsolicited_interval_s=0.1,
-        enable_audio=True,
+        enable_audio=enable_audio,
         stateful_ptt=managed_tx,
+        dual_receiver=dual_receiver,
+        capture_civ_frames=capture_civ_frames,
     )
+    if profile.expected_identity_ids:
+        sim.model_id = bytes.fromhex(profile.expected_identity_ids[0])
     await sim.start()
     # timeout=1.0: the simulator does not answer a few menu reads the
     # poller seeds at connect (NB depth/width, DATA MOD inputs); at the
@@ -1205,7 +1219,7 @@ async def _start_simulator_stack(managed_tx: bool = False) -> _SimulatorStack:
         username="soak",
         password="soak",
         timeout=1.0,
-        model="IC-7610",
+        model=model,
     )
     composition = None
     config_dir: tempfile.TemporaryDirectory[str] | None = None
@@ -1541,13 +1555,19 @@ class _TxSessionClient:
 
         self._heartbeat = asyncio.create_task(beat(), name="soak-tx-heartbeat")
 
-    async def command(self, name: str, timeout_s: float = 10.0) -> bool:
+    async def command(
+        self,
+        name: str,
+        timeout_s: float = 10.0,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> bool:
         """Run one control command; whether the server answered ``ok``."""
         assert self._ws is not None
         self._next_id += 1
         command_id = f"soak-{self._next_id}"
         await self._ws.send_json(
-            {"type": "cmd", "id": command_id, "name": name, "params": {}}
+            {"type": "cmd", "id": command_id, "name": name, "params": params or {}}
         )
         deadline = time.monotonic() + timeout_s
         while True:
