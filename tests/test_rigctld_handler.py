@@ -25,11 +25,6 @@ from rigplane.core.state_acquisition_policy import (
     FieldCapability,
     RadioAcquisitionProfile,
 )
-from rigplane.exceptions import CommandError as IcomCommandError
-from rigplane.exceptions import CommandRejectedError
-from rigplane.exceptions import ConnectionError as IcomConnectionError
-from rigplane.exceptions import TimeoutError as IcomTimeoutError
-from rigplane.radio import IcomRadio
 from rigplane.core.state_pipeline_contracts import (
     CommandSource,
     FieldPath,
@@ -37,6 +32,12 @@ from rigplane.core.state_pipeline_contracts import (
     SourceMetadata,
 )
 from rigplane.core.state_store import FreshnessState, StateStore
+from rigplane.exceptions import CommandError as IcomCommandError
+from rigplane.exceptions import CommandRejectedError
+from rigplane.exceptions import ConnectionError as IcomConnectionError
+from rigplane.exceptions import TimeoutError as IcomTimeoutError
+from rigplane.profiles import resolve_radio_profile
+from rigplane.radio import IcomRadio
 from rigplane.radio_state import RadioState
 from rigplane.rigctld.contract import (
     ClientSession,
@@ -2886,6 +2887,45 @@ async def test_get_level_preamp_2(
     resp = await handler.execute(get_cmd("get_level", "PREAMP"))
     assert resp.ok
     assert resp.values[0] == "20"
+
+
+@pytest.mark.asyncio
+async def test_get_level_preamp_combination_unavailable_records_no_sample(
+    mock_radio: AsyncMock, config: RigctldConfig
+) -> None:
+    mock_radio.profile = resolve_radio_profile(model="IC-9700")
+    mock_radio.get_preamp = AsyncMock(spec=IcomRadio.get_preamp, return_value=3)
+    store = StateStore()
+    handler = RigctldHandler(mock_radio, config, state_store=store)
+
+    resp = await handler.execute(get_cmd("get_level", "PREAMP"))
+
+    assert mock_radio.get_preamp.await_count == 1
+    assert resp.error == HamlibError.ENAVAIL
+    assert resp.values == []
+    with pytest.raises(KeyError):
+        store.snapshot().field("receiver.main.operator_controls.preamp")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("model", ["IC-7300", "IC-9700"])
+@pytest.mark.parametrize("index,db", [(0, 0), (1, 12), (2, 20)])
+async def test_get_level_preamp_representable_values_unchanged(
+    mock_radio: AsyncMock, config: RigctldConfig, model: str, index: int, db: int
+) -> None:
+    mock_radio.profile = resolve_radio_profile(model=model)
+    mock_radio.get_preamp = AsyncMock(spec=IcomRadio.get_preamp, return_value=index)
+    store = StateStore()
+    handler = RigctldHandler(mock_radio, config, state_store=store)
+
+    resp = await handler.execute(get_cmd("get_level", "PREAMP"))
+
+    assert mock_radio.get_preamp.await_count == 1
+    assert resp.ok
+    assert resp.values == [str(db)]
+    observed = store.snapshot().field("receiver.main.operator_controls.preamp")
+    assert observed.value == db
+    assert observed.source.source == "hamlib_response"
 
 
 @pytest.mark.asyncio

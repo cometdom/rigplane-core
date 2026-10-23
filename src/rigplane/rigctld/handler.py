@@ -2703,7 +2703,9 @@ class RigctldHandler:
         # PREAMP — returns dB (0, 12, 20)
         if level == "PREAMP":
             idx = await self._radio.get_preamp()
-            db = _PREAMP_IDX_TO_DB[idx] if 0 <= idx < len(_PREAMP_IDX_TO_DB) else 0
+            if not 0 <= idx < len(_PREAMP_IDX_TO_DB):
+                return _err(HamlibError.ENAVAIL)
+            db = _PREAMP_IDX_TO_DB[idx]
             self._record_state_sample(
                 self._level_path(level, receiver=receiver) or "",
                 db,
