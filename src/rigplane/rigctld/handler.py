@@ -233,6 +233,14 @@ def _preamp_index_to_db(index: object) -> int | None:
     return _PREAMP_IDX_TO_DB[index]
 
 
+def _preamp_db_to_index(value: float) -> int:
+    db = round(value)
+    return min(
+        range(len(_PREAMP_IDX_TO_DB)),
+        key=lambda i: abs(_PREAMP_IDX_TO_DB[i] - db),
+    )
+
+
 # Functions: hamlib name → get/set method names
 _FUNC_GET: dict[str, str] = {
     "NB": "get_nb",
@@ -2760,15 +2768,18 @@ class RigctldHandler:
         # Single-RX profiles only have receiver=0; per-VFO state is selected
         # via set_vfo_slot, not receiver= (issue #1354).
         receiver = self._receiver_index_for(target)
+        params: dict[str, Any] = {
+            "level": level,
+            "value": value,
+            "receiver": receiver,
+            "vfo_arg": cmd.vfo_arg,
+        }
+        if level == "PREAMP" and self._routing is None:
+            params["preamp"] = _preamp_db_to_index(value)
         await self._execute_write(
             command_intent_from_request(
                 "set_level",
-                {
-                    "level": level,
-                    "value": value,
-                    "receiver": receiver,
-                    "vfo_arg": cmd.vfo_arg,
-                },
+                params,
                 source="rigctld",
                 command_id=f"rigctld-set-level-{time.monotonic_ns()}",
                 session_id=self._session_id(),
@@ -2836,13 +2847,7 @@ class RigctldHandler:
             return HamlibError.OK
 
         if level == "PREAMP":
-            db = round(value)
-            # Find nearest supported dB (0, 12, 20)
-            idx = min(
-                range(len(_PREAMP_IDX_TO_DB)),
-                key=lambda i: abs(_PREAMP_IDX_TO_DB[i] - db),
-            )
-            await self._radio.set_preamp(idx)
+            await self._radio.set_preamp(_preamp_db_to_index(value))
             return HamlibError.OK
 
         if level == "ATT":

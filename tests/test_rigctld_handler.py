@@ -3175,6 +3175,44 @@ async def test_set_level_preamp_20db(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("model", ["IC-7300", "IC-9700"])
+@pytest.mark.parametrize("db,index", [(12, 1), (20, 2)])
+async def test_set_level_preamp_pending_native_index_returns_db(
+    mock_radio: AsyncMock, config: RigctldConfig, model: str, db: int, index: int
+) -> None:
+    mock_radio.profile = resolve_radio_profile(model=model)
+    mock_radio.set_preamp = AsyncMock(spec=IcomRadio.set_preamp)
+    mock_radio.get_preamp = AsyncMock(spec=IcomRadio.get_preamp, return_value=0)
+    store = StateStore()
+    path = FieldPath.receiver("0", "operator_controls", "preamp")
+    _apply_store_value(store, str(path), 0)
+    _seed_known_rx(store)
+    handler = RigctldHandler(mock_radio, config, state_store=store)
+    session_id = "preamp-client"
+    write = parse_line(f"L PREAMP {db}".encode("ascii"))
+    read = parse_line(b"l PREAMP")
+
+    assert (await handler.execute(write, session_id=session_id)).ok
+    resp = await handler.execute(read, session_id=session_id)
+
+    assert resp.ok
+    assert resp.values == [str(db)]
+    mock_radio.set_preamp.assert_awaited_once_with(index)
+    mock_radio.get_preamp.assert_not_awaited()
+    service = handler._command_service  # noqa: SLF001
+    overlays = service.pending_overlays(
+        source="rigctld", session_id=session_id, path=path
+    )
+    assert len(overlays) == 1
+    assert overlays[0].value == index
+    expectations = service.readback_expectations(
+        source="rigctld", session_id=session_id, command_id=overlays[0].command_id
+    )
+    assert [(item.path, item.value) for item in expectations] == [(path, index)]
+    assert store.snapshot().field(path).value == 0
+
+
+@pytest.mark.asyncio
 async def test_set_level_preamp_out_of_domain_returns_einval_not_a_write(
     handler: RigctldHandler, mock_radio: AsyncMock
 ) -> None:
@@ -3828,6 +3866,23 @@ def yaesu_radio() -> AsyncMock:
 @pytest.fixture
 def yaesu_handler(yaesu_radio: AsyncMock, config: RigctldConfig) -> RigctldHandler:
     return RigctldHandler(yaesu_radio, config)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("index", [1, 2])
+async def test_yaesu_preamp_read_after_write_preserves_native_index(
+    yaesu_handler: RigctldHandler, yaesu_radio: AsyncMock, index: int
+) -> None:
+    write = parse_line(f"L PREAMP {index}".encode("ascii"))
+    read = parse_line(b"l PREAMP")
+
+    assert (await yaesu_handler.execute(write, session_id="yaesu-preamp")).ok
+    resp = await yaesu_handler.execute(read, session_id="yaesu-preamp")
+
+    assert resp.ok
+    assert resp.values == [str(index)]
+    yaesu_radio.set_preamp.assert_awaited_once_with(index)
+    yaesu_radio.get_preamp.assert_not_awaited()
 
 
 # -- Yaesu get_level ----------------------------------------------------------
