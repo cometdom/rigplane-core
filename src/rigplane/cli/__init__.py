@@ -1177,7 +1177,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "value",
         nargs="?",
         type=str,
-        help="Preamp level: 0 (off), 1 (PRE1), 2 (PRE2), or 'off'",
+        help="Preamp levels from radio profile (0, 1, 2, or 'off' if undeclared)",
     )
 
     # antenna
@@ -4012,6 +4012,7 @@ async def _cmd_preamp(radio: Radio, args: argparse.Namespace) -> int:
     values = (profile.pre_values or ()) if profile is not None else ()
     labels = (profile.pre_labels or {}) if profile is not None else {}
     declared_values = ", ".join(str(value) for value in values)
+    allowed_values = values or (0, 1, 2)
     if args.value is not None:
         val = args.value.strip().lower()
         if val == "off":
@@ -4020,15 +4021,27 @@ async def _cmd_preamp(radio: Radio, args: argparse.Namespace) -> int:
             try:
                 level = int(val)
             except ValueError:
-                print(
-                    f"Error: invalid preamp value {val!r}. "
-                    f"Use a declared level: {declared_values} ('off' means 0).",
-                    file=sys.stderr,
-                )
+                if values:
+                    message = (
+                        f"Error: invalid preamp value {val!r}. "
+                        f"Use a declared level: {declared_values} ('off' means 0)."
+                    )
+                else:
+                    message = (
+                        f"Error: invalid preamp value {val!r}. Use 'off', 0, 1, or 2."
+                    )
+                print(message, file=sys.stderr)
                 return 1
-        if level not in values:
+        if level not in allowed_values:
+            if values:
+                message = (
+                    f"Error: preamp level must be one of {declared_values} "
+                    f"(got {level})."
+                )
+            else:
+                message = f"Error: preamp level must be 0, 1, or 2 (got {level})."
             print(
-                f"Error: preamp level must be one of {declared_values} (got {level}).",
+                message,
                 file=sys.stderr,
             )
             return 1

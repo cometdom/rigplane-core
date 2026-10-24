@@ -222,6 +222,17 @@ _SET_LEVEL_FLOAT: dict[str, str] = {
 # Preamp: level index → dB (matches dump_state "12 20 0")
 _PREAMP_IDX_TO_DB: list[int] = [0, 12, 20]
 
+
+def _preamp_index_to_db(index: object) -> int | None:
+    if (
+        not isinstance(index, int)
+        or isinstance(index, bool)
+        or not 0 <= index < len(_PREAMP_IDX_TO_DB)
+    ):
+        return None
+    return _PREAMP_IDX_TO_DB[index]
+
+
 # Functions: hamlib name → get/set method names
 _FUNC_GET: dict[str, str] = {
     "NB": "get_nb",
@@ -2585,6 +2596,11 @@ class RigctldHandler:
                             )
                         ]
                     )
+                if level == "PREAMP":
+                    db = _preamp_index_to_db(projected.value)
+                    if db is None:
+                        return _err(HamlibError.ENAVAIL)
+                    return RigctldResponse(values=[str(db)])
                 return RigctldResponse(values=[str(projected.value)])
         main_state = self._main_receiver_state()
 
@@ -2703,12 +2719,12 @@ class RigctldHandler:
         # PREAMP — returns dB (0, 12, 20)
         if level == "PREAMP":
             idx = await self._radio.get_preamp()
-            if not 0 <= idx < len(_PREAMP_IDX_TO_DB):
+            db = _preamp_index_to_db(idx)
+            if db is None:
                 return _err(HamlibError.ENAVAIL)
-            db = _PREAMP_IDX_TO_DB[idx]
             self._record_state_sample(
                 self._level_path(level, receiver=receiver) or "",
-                db,
+                idx,
                 source="hamlib_response",
                 max_age=self._config.cache_ttl,
             )

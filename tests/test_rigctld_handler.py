@@ -2908,6 +2908,71 @@ async def test_get_level_preamp_combination_unavailable_records_no_sample(
 
 
 @pytest.mark.asyncio
+async def test_get_level_preamp_ic9700_ingress_combination_is_unavailable() -> None:
+    radio = IcomRadio("192.168.1.100", model="IC-9700")
+    frame = CivFrame(
+        to_addr=CONTROLLER_ADDR,
+        from_addr=radio.profile.civ_addr,
+        command=0x16,
+        sub=0x02,
+        data=b"\x03",
+        receiver=0,
+    )
+    radio._civ_runtime._update_state_cache_from_frame(frame)  # noqa: SLF001
+    store = radio._state_store  # noqa: SLF001
+    observed = store.snapshot().field("receiver.0.operator_controls.preamp")
+    assert observed.value == 3
+    handler = RigctldHandler(radio, RigctldConfig(), state_store=store)
+
+    with mock.patch.object(
+        radio, "get_preamp", AsyncMock(spec=IcomRadio.get_preamp)
+    ) as read:
+        resp = await handler.execute(get_cmd("get_level", "PREAMP"))
+
+    assert resp.error == HamlibError.ENAVAIL
+    assert resp.values == []
+    read.assert_not_awaited()
+    assert store.snapshot().field("receiver.0.operator_controls.preamp") == observed
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("model", ["IC-7300", "IC-9700"])
+@pytest.mark.parametrize("index,db", [(1, 12), (2, 20)])
+async def test_get_level_preamp_cached_native_index_returns_db(
+    mock_radio: AsyncMock, config: RigctldConfig, model: str, index: int, db: int
+) -> None:
+    mock_radio.profile = resolve_radio_profile(model=model)
+    mock_radio.get_preamp = AsyncMock(spec=IcomRadio.get_preamp)
+    store = StateStore()
+    _apply_store_value(store, "receiver.main.operator_controls.preamp", index)
+    handler = RigctldHandler(mock_radio, config, state_store=store)
+
+    resp = await handler.execute(get_cmd("get_level", "PREAMP"))
+
+    assert resp.ok
+    assert resp.values == [str(db)]
+    mock_radio.get_preamp.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("index", [True, "1", -1])
+async def test_get_level_preamp_live_invalid_index_is_unavailable(
+    mock_radio: AsyncMock, config: RigctldConfig, index: object
+) -> None:
+    mock_radio.get_preamp = AsyncMock(spec=IcomRadio.get_preamp, return_value=index)
+    store = StateStore()
+    handler = RigctldHandler(mock_radio, config, state_store=store)
+
+    resp = await handler.execute(get_cmd("get_level", "PREAMP"))
+
+    assert resp.error == HamlibError.ENAVAIL
+    assert resp.values == []
+    mock_radio.get_preamp.assert_awaited_once_with()
+    with pytest.raises(KeyError):
+        store.snapshot().field("receiver.main.operator_controls.preamp")
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("model", ["IC-7300", "IC-9700"])
 @pytest.mark.parametrize("index,db", [(0, 0), (1, 12), (2, 20)])
 async def test_get_level_preamp_representable_values_unchanged(
@@ -2924,8 +2989,12 @@ async def test_get_level_preamp_representable_values_unchanged(
     assert resp.ok
     assert resp.values == [str(db)]
     observed = store.snapshot().field("receiver.main.operator_controls.preamp")
-    assert observed.value == db
+    assert observed.value == index
     assert observed.source.source == "hamlib_response"
+    cached = await handler.execute(get_cmd("get_level", "PREAMP"))
+    assert cached.ok
+    assert cached.values == [str(db)]
+    mock_radio.get_preamp.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio

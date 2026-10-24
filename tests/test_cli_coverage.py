@@ -734,6 +734,75 @@ async def test_cmd_preamp_uses_declared_domain_and_name_fallback(
     assert ", ".join(str(value) for value in values) in capsys.readouterr().err
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("value,level", [("off", 0), ("0", 0), ("1", 1), ("2", 2)])
+async def test_cmd_preamp_empty_profile_domain_uses_legacy_levels(
+    value: str, level: int
+) -> None:
+    radio = MagicMock(spec=AdvancedControlCapable)
+    radio.profile = replace(get_radio_profile("ic7300"), pre_values=())
+
+    assert await _cmd_preamp(radio, argparse.Namespace(value=value, json=False)) == 0
+    radio.set_preamp.assert_awaited_once_with(level)
+
+
+@pytest.mark.asyncio
+async def test_main_preamp_external_rigctld_wire_and_invalid_values(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from fake_rigctld import FakeRigctldServer
+
+    monkeypatch.setenv("ICOM_DEBUG", "0")
+    monkeypatch.setenv("ICOM_LOG_FILE", "off")
+
+    def exit_as_exception(code: int) -> None:
+        raise SystemExit(code)
+
+    def invoke_main(argv: list[str]) -> int:
+        with (
+            patch("sys.argv", argv),
+            patch("rigplane.cli.signal.signal", autospec=True),
+            patch("rigplane.cli.logging.basicConfig", autospec=True),
+            patch(
+                "rigplane.cli.os._exit", autospec=True, side_effect=exit_as_exception
+            ),
+        ):
+            try:
+                main()
+            except SystemExit as exc:
+                return int(exc.code)
+        raise AssertionError("main() did not exit")
+
+    async with FakeRigctldServer() as server:
+        base = [
+            "rigplane",
+            "--backend",
+            "rigctld",
+            "--host",
+            server.host,
+            "--port",
+            str(server.port),
+            "preamp",
+        ]
+        for value, db in [("off", 0), ("1", 10), ("2", 20)]:
+            assert await asyncio.to_thread(invoke_main, [*base, value]) == 0
+            assert server.commands_seen[-1] == f"L PREAMP {db}"
+            assert server.state.preamp_db == db
+            capsys.readouterr()
+
+        before = [cmd for cmd in server.commands_seen if cmd.startswith("L PREAMP ")]
+        for value, error in [
+            ("7", "Error: preamp level must be 0, 1, or 2 (got 7)."),
+            ("abc", "Error: invalid preamp value 'abc'. Use 'off', 0, 1, or 2."),
+        ]:
+            assert await asyncio.to_thread(invoke_main, [*base, value]) == 1
+            assert capsys.readouterr().err.strip().splitlines()[-1] == error
+            assert [
+                cmd for cmd in server.commands_seen if cmd.startswith("L PREAMP ")
+            ] == before
+
+
 def _make_scope_capable_mock(base: MagicMock | None = None) -> MagicMock:
     """Return a mock that satisfies isinstance(..., ScopeCapable) in CLI.
 
