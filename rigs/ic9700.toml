@@ -102,6 +102,7 @@ features = [
     "agc",
     "tuning_step",
     "band_edge",
+    "memory_read",
     "xfc",
     # System
     "system_settings",
@@ -348,6 +349,9 @@ first_group = 1
 last_group = 3
 first_channel = 1
 last_channel = 99
+# CI-V Reference Guide rev 4, 1A 00 offset digit; Advanced manual, DD mode: 1.2 GHz only.
+dd_groups = [3]
+offset_10mhz_groups = [3]
 
 [ctcss]
 table = "standard_50"
