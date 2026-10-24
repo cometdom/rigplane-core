@@ -2967,7 +2967,7 @@ async def test_get_level_preamp_live_invalid_index_is_unavailable(
 
     assert resp.error == HamlibError.ENAVAIL
     assert resp.values == []
-    mock_radio.get_preamp.assert_awaited_once_with()
+    mock_radio.get_preamp.assert_awaited_once()
     with pytest.raises(KeyError):
         store.snapshot().field("receiver.main.operator_controls.preamp")
 
@@ -2994,7 +2994,7 @@ async def test_get_level_preamp_representable_values_unchanged(
     cached = await handler.execute(get_cmd("get_level", "PREAMP"))
     assert cached.ok
     assert cached.values == [str(db)]
-    mock_radio.get_preamp.assert_awaited_once_with()
+    mock_radio.get_preamp.assert_awaited_once()
 
 
 @pytest.mark.asyncio
